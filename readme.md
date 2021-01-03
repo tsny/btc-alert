@@ -4,4 +4,4 @@ Build and run main.go
 
 ## Example
 
-![Example Screenshot](https://imgur.com/DMK9ROB)
+![Example Screenshot](https://i.imgur.com/DMK9ROB.png)
