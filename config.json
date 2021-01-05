@@ -2,7 +2,7 @@
     "bootNotification": false,
     "thresholds": [
         {
-            "threshold": 100
+            "threshold": 500
         }
     ],
     "intervals": [

@@ -38,5 +38,9 @@ func init() {
 		panic(err)
 	}
 	json.Unmarshal(bytes, &conf)
+	banner("btc-alert initializing")
 	fmt.Printf("props: %d intervals | %d thresholds\n", len(conf.Intervals), len(conf.Thresholds))
+	for _, i := range conf.Intervals {
+		fmt.Printf("Interval -- Minutes: %d | Percentage Threshold: %v\n", i.MaxOccurences, i.PercentThreshold)
+	}
 }
