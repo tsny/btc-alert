@@ -97,9 +97,9 @@ func (c *change) checkThreshold() {
 }
 
 func (c *change) onThresholdReached() {
-	c.beginPrice = price
-	str := "%s: ALERT: Price Threshold Breached: %d | %s"
+	str := "%s: ALERT: Price Threshold Breached: $%d | %s"
 	bannerf(str, getTime(), c.Threshold, formatPriceMovement(c.beginPrice, price))
+	c.beginPrice = price
 }
 
 func formatPriceMovement(begin, end float64) string {
