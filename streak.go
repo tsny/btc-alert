@@ -72,10 +72,11 @@ func (i *interval) onCompleted() {
 	}
 	totalChange := sf("$%.2f --> $%.2f", i.beginPrice, price)
 	changes := sf("Change: $%.2f | Percent: %.3f%%", diff, percent)
-	s := sf("%s: %s%d Minutes Passed | %s | %s", getTime(), prefix, i.occurrences, totalChange, changes)
-	banner(s)
+	bannerText := sf("%s: %s%d Minutes Passed | %s | %s", getTime(), prefix, i.occurrences, totalChange, changes)
+	banner(bannerText)
 	if math.Abs(percent) > i.PercentThreshold {
-		beeep.Alert("BTC_MOVEMENT", s, "assets/warning.png")
+		hdr := sf("%d Minutes Passed | %.2f%%", i.MaxOccurences, i.PercentThreshold)
+		beeep.Alert(hdr, bannerText, "assets/warning.png")
 	}
 }
 

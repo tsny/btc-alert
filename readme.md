@@ -13,3 +13,8 @@ more than the `percentThreshold` field.
 ## Example
 
 ![Example Screenshot](https://i.imgur.com/lKS8kzG.png)
+
+## Dependencies
+
+github.com/gen2brain/beeep - Notifications
+Yahoo Finance              - BTC Price Data

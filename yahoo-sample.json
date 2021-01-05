@@ -1,5 +1,3 @@
-// 20210102212543
-// https://query1.finance.yahoo.com/v7/finance/quote?symbols=BTC-USD
 {
     "quoteResponse": {
         "result": [
