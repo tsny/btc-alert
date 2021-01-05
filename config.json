@@ -1,5 +1,6 @@
 {
-    "changes": [
+    "bootNotification": false,
+    "thresholds": [
         {
             "threshold": 100
         }

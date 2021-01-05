@@ -17,4 +17,5 @@ more than the `percentThreshold` field.
 ## Dependencies
 
 github.com/gen2brain/beeep - Notifications
+
 Yahoo Finance              - BTC Price Data

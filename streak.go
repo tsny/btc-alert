@@ -1,51 +1,17 @@
 package main
 
 import (
-	"encoding/json"
 	. "fmt"
-	"io/ioutil"
 	"math"
+	"strings"
 	"time"
 
 	"github.com/gen2brain/beeep"
 )
 
-type config struct {
-	Intervals []*interval `json:"intervals"`
-	Changes   []*change   `json:"changes"`
-}
-
-// changes are price jumps
-// alerts after prices move a certain amount from
-// the starting price
-type change struct {
-	beginPrice float64
-	Threshold  float64 `json:"threshold"`
-}
-
-// intervals
-type interval struct {
-	beginPrice       float64
-	occurrences      int
-	MaxOccurences    int     `json:"maxOccurences"`
-	PercentThreshold float64 `json:"percentThreshold"`
-	startTime        time.Time
-}
-
-var conf config
-
-func init() {
-	bytes, err := ioutil.ReadFile("config.json")
-	if err != nil {
-		panic(err)
-	}
-	json.Unmarshal(bytes, &conf)
-	Printf("props: %d intervals | %d changes\n", len(conf.Intervals), len(conf.Changes))
-}
-
 var sf = Sprintf
 
-func onDataUpdated() {
+func onPriceUpdated() {
 	intervalCompleted := false
 	for _, i := range conf.Intervals {
 		if i.beginPrice == 0 {
@@ -58,16 +24,23 @@ func onDataUpdated() {
 			intervalCompleted = true
 		}
 	}
+	for _, c := range conf.Thresholds {
+		c.checkThreshold()
+	}
 	if !intervalCompleted {
-		t := getTime()
-		emoji := getEmoji(price, lastPrice)
-		diff := price - lastPrice
-		percent := (diff / price) * 100
-		if lastPrice == 0.00 {
-			Printf("%s %s: $%.2f \n", emoji, t, price)
-		} else {
-			Printf("%s %s: $%.2f | Change: $%.2f | Percent: %.3f%% \n", emoji, t, price, diff, percent)
-		}
+		printSummary()
+	}
+}
+
+func printSummary() {
+	t := getTime()
+	emoji := getEmoji(price, lastPrice)
+	diff := price - lastPrice
+	percent := (diff / price) * 100
+	if lastPrice == 0.00 {
+		Printf("%s %s: $%.2f \n", emoji, t, price)
+	} else {
+		Printf("%s %s: $%.2f | Change: $%.2f | Percent: %.3f%% \n", emoji, t, price, diff, percent)
 	}
 }
 
@@ -84,22 +57,24 @@ func (i *interval) onCompleted() {
 	banner(bannerText)
 	if math.Abs(percent) > i.PercentThreshold {
 		hdr := sf("%d Minutes Passed | %.2f%%", i.MaxOccurences, i.PercentThreshold)
-		beeep.Alert(hdr, bannerText, "assets/warning.png")
+		notif(hdr, bannerText, "assets/warning.png")
 	}
 }
 
-func (c *change) checkThreshold() {
-	if price >= c.Threshold+c.beginPrice {
-		c.onThresholdReached()
-	} else if price <= c.beginPrice-c.Threshold {
-		c.onThresholdReached()
+func (t *threshold) checkThreshold() {
+	if price >= t.Threshold+t.beginPrice {
+		t.onThresholdReached()
+	} else if price <= t.beginPrice-t.Threshold {
+		t.onThresholdReached()
 	}
 }
 
-func (c *change) onThresholdReached() {
-	str := "%s: ALERT: Price Threshold Breached: $%d | %s"
-	bannerf(str, getTime(), c.Threshold, formatPriceMovement(c.beginPrice, price))
-	c.beginPrice = price
+func (t *threshold) onThresholdReached() {
+	hdr := sf("Price Threshold Breached: $%v", t.Threshold)
+	body := sf("%s: %s | %s", getTime(), hdr, formatPriceMovement(t.beginPrice, price))
+	banner("ALERT " + body)
+	notif(hdr, body, "assets/warning.png")
+	t.beginPrice = price
 }
 
 func formatPriceMovement(begin, end float64) string {
@@ -114,4 +89,14 @@ func (i *interval) reset() {
 	i.occurrences = 0
 	i.startTime = time.Now()
 	i.beginPrice = price
+}
+
+// notif is a beeep.Alert() wrapper
+// it ensures there are no '$'
+// since this can mess with powershell notifications
+func notif(hdr, body, img string) {
+	hdr = strings.ReplaceAll(hdr, "$", "💲")
+	body = strings.ReplaceAll(body, "$", "💲")
+	body = strings.ReplaceAll(body, "|", "\n")
+	beeep.Alert(hdr, body, img)
 }

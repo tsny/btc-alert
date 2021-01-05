@@ -2,10 +2,8 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"math"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/gen2brain/beeep"
@@ -17,6 +15,7 @@ const (
 	down    = "🟥"
 	neutral = "🟦"
 	alert   = "☎️"
+	dollar  = "💲"
 	format  = "15:04:05"
 )
 
@@ -24,24 +23,22 @@ var lastPrice = 0.00
 var price = 0.00
 
 func main() {
-	beeep.Alert("BTC_ALERT", "STARTING UP", "assets/warning.png")
-	banner("Fetching BTC Prices...")
+	if conf.BootNotification {
+		beeep.Alert("BTC_ALERT", "STARTING UP", "assets/warning.png")
+	}
+	banner("btc-alert initialized")
 	for {
 		price = fetchData()
-		onDataUpdated()
+		onPriceUpdated()
 		lastPrice = price
 		time.Sleep(60 * time.Second)
 	}
 }
 
-func banner(str string) {
-	b := strings.Repeat("-", len(str))
-	fmt.Printf("%s\n%s\n%s\n", b, str, b)
-}
-
-func bannerf(str string, args ...interface{}) {
-	str = sf(str, args...)
-	banner(str)
+func onFirstPriceFetched() {
+	for _, c := range conf.Thresholds {
+		c.beginPrice = price
+	}
 }
 
 func getEmoji(curr, prev float64) string {
@@ -56,7 +53,8 @@ func getEmoji(curr, prev float64) string {
 func fetchData() float64 {
 	res, err := http.Get(url)
 	if err != nil {
-		panic(err)
+		banner(err.Error())
+		return 0
 	}
 	var out TLR
 	d := json.NewDecoder(res.Body)
@@ -64,6 +62,9 @@ func fetchData() float64 {
 	if err != nil {
 		panic(err)
 	}
-	price := out.QuoteResponse.Result[0].RegularMarketPrice
+	price = out.QuoteResponse.Result[0].RegularMarketPrice
+	if lastPrice == 0 {
+		onFirstPriceFetched()
+	}
 	return math.Round(price*100) / 100
 }
