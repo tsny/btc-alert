@@ -10,12 +10,20 @@ import (
 	"github.com/gen2brain/beeep"
 )
 
-type streak struct {
-	positive    bool
-	occurrences int
-	total       float64
+type config struct {
+	Intervals []*interval `json:"intervals"`
+	Changes   []*change   `json:"changes"`
 }
 
+// changes are price jumps
+// alerts after prices move a certain amount from
+// the starting price
+type change struct {
+	beginPrice float64
+	Threshold  float64 `json:"threshold"`
+}
+
+// intervals
 type interval struct {
 	beginPrice       float64
 	occurrences      int
@@ -24,22 +32,22 @@ type interval struct {
 	startTime        time.Time
 }
 
-var intervals []*interval
+var conf config
 
 func init() {
 	bytes, err := ioutil.ReadFile("config.json")
 	if err != nil {
 		panic(err)
 	}
-	json.Unmarshal(bytes, &intervals)
-	Printf("Got %d intervals from props file\n", len(intervals))
+	json.Unmarshal(bytes, &conf)
+	Printf("props: %d intervals | %d changes\n", len(conf.Intervals), len(conf.Changes))
 }
 
 var sf = Sprintf
 
 func onDataUpdated() {
 	intervalCompleted := false
-	for _, i := range intervals {
+	for _, i := range conf.Intervals {
 		if i.beginPrice == 0 {
 			i.beginPrice = price
 		}
@@ -78,6 +86,24 @@ func (i *interval) onCompleted() {
 		hdr := sf("%d Minutes Passed | %.2f%%", i.MaxOccurences, i.PercentThreshold)
 		beeep.Alert(hdr, bannerText, "assets/warning.png")
 	}
+}
+
+func (c *change) checkThreshold() {
+	if price >= c.Threshold+c.beginPrice {
+		c.onThresholdReached()
+	} else if price <= c.beginPrice-c.Threshold {
+		c.onThresholdReached()
+	}
+}
+
+func (c *change) onThresholdReached() {
+	c.beginPrice = price
+	str := "%s: ALERT: Price Threshold Breached: %d | %s"
+	bannerf(str, getTime(), c.Threshold, formatPriceMovement(c.beginPrice, price))
+}
+
+func formatPriceMovement(begin, end float64) string {
+	return sf("$%.2f --> $%.2f", begin, end)
 }
 
 func getTime() string {

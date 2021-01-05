@@ -1,4 +1,10 @@
-    [
+{
+    "changes": [
+        {
+            "threshold": 100
+        }
+    ],
+    "intervals": [
         {
             "maxOccurences": 5,
             "percentThreshold": 0.5
@@ -12,3 +18,4 @@
             "percentThreshold": 2
         }
     ]
+}
