@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/gen2brain/beeep"
 )
 
 const (
@@ -22,6 +24,7 @@ var lastPrice = 0.00
 var price = 0.00
 
 func main() {
+	beeep.Alert("BTC_ALERT", "STARTING UP", "assets/warning.png")
 	banner("Fetching BTC Prices...")
 	for {
 		price = fetchData()
@@ -31,10 +34,14 @@ func main() {
 	}
 }
 
-func banner(str string, args ...interface{}) {
-	str = sf(str, args...)
+func banner(str string) {
 	b := strings.Repeat("-", len(str))
 	fmt.Printf("%s\n%s\n%s\n", b, str, b)
+}
+
+func bannerf(str string, args ...interface{}) {
+	str = sf(str, args...)
+	banner(str)
 }
 
 func getEmoji(curr, prev float64) string {

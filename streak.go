@@ -2,7 +2,10 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"time"
+
+	"github.com/gen2brain/beeep"
 )
 
 type streak struct {
@@ -57,12 +60,16 @@ func (i *interval) onCompleted() {
 	diff := price - i.beginPrice
 	percent := (diff / i.beginPrice) * 100
 	prefix := ""
-	if percent > i.percentThreshold {
-		prefix = sf("%s ALERT: Threshold of %f%% was reached! ", alert, i.percentThreshold)
+	if math.Abs(percent) > i.percentThreshold {
+		prefix = sf("%s ALERT: Threshold of %.2f%% was reached! ", alert, i.percentThreshold)
 	}
-	totalChange := sf("%.2f --> %.2f", i.beginPrice, price)
+	totalChange := sf("$%.2f --> $%.2f", i.beginPrice, price)
 	changes := sf("Change: $%.2f | Percent: %.3f%%", diff, percent)
-	banner("%s: %s%d Minutes Passed | %s | %s", getTime(), prefix, i.occurrences, totalChange, changes)
+	s := sf("%s: %s%d Minutes Passed | %s | %s", getTime(), prefix, i.occurrences, totalChange, changes)
+	banner(s)
+	if math.Abs(percent) > i.percentThreshold {
+		beeep.Alert("BTC_MOVEMENT", s, "assets/warning.png")
+	}
 }
 
 func getTime() string {
