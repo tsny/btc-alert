@@ -1,7 +1,9 @@
 package main
 
 import (
-	"fmt"
+	"encoding/json"
+	. "fmt"
+	"io/ioutil"
 	"math"
 	"time"
 
@@ -17,18 +19,23 @@ type streak struct {
 type interval struct {
 	beginPrice       float64
 	occurrences      int
-	maxOccurences    int
-	percentThreshold float64
+	MaxOccurences    int     `json:"maxOccurences"`
+	PercentThreshold float64 `json:"percentThreshold"`
 	startTime        time.Time
 }
 
-var intervals []*interval = []*interval{
-	&interval{0.0, 0, 60, 2, time.Now()},
-	&interval{0.0, 0, 30, 1, time.Now()},
-	&interval{0.0, 0, 5, .5, time.Now()},
+var intervals []*interval
+
+func init() {
+	bytes, err := ioutil.ReadFile("config.json")
+	if err != nil {
+		panic(err)
+	}
+	json.Unmarshal(bytes, &intervals)
+	Printf("Got %d intervals from props file\n", len(intervals))
 }
 
-var sf = fmt.Sprintf
+var sf = Sprintf
 
 func onDataUpdated() {
 	intervalCompleted := false
@@ -37,7 +44,7 @@ func onDataUpdated() {
 			i.beginPrice = price
 		}
 		i.occurrences++
-		if i.occurrences >= i.maxOccurences {
+		if i.occurrences >= i.MaxOccurences {
 			i.onCompleted()
 			i.reset()
 			intervalCompleted = true
@@ -49,9 +56,9 @@ func onDataUpdated() {
 		diff := price - lastPrice
 		percent := (diff / price) * 100
 		if lastPrice == 0.00 {
-			fmt.Printf("%s %s: $%.2f \n", emoji, t, price)
+			Printf("%s %s: $%.2f \n", emoji, t, price)
 		} else {
-			fmt.Printf("%s %s: $%.2f | Change: $%.2f | Percent: %.3f%% \n", emoji, t, price, diff, percent)
+			Printf("%s %s: $%.2f | Change: $%.2f | Percent: %.3f%% \n", emoji, t, price, diff, percent)
 		}
 	}
 }
@@ -60,14 +67,14 @@ func (i *interval) onCompleted() {
 	diff := price - i.beginPrice
 	percent := (diff / i.beginPrice) * 100
 	prefix := ""
-	if math.Abs(percent) > i.percentThreshold {
-		prefix = sf("%s ALERT: Threshold of %.2f%% was reached! ", alert, i.percentThreshold)
+	if math.Abs(percent) > i.PercentThreshold {
+		prefix = sf("%s ALERT: Threshold of %.2f%% was reached! ", alert, i.PercentThreshold)
 	}
 	totalChange := sf("$%.2f --> $%.2f", i.beginPrice, price)
 	changes := sf("Change: $%.2f | Percent: %.3f%%", diff, percent)
 	s := sf("%s: %s%d Minutes Passed | %s | %s", getTime(), prefix, i.occurrences, totalChange, changes)
 	banner(s)
-	if math.Abs(percent) > i.percentThreshold {
+	if math.Abs(percent) > i.PercentThreshold {
 		beeep.Alert("BTC_MOVEMENT", s, "assets/warning.png")
 	}
 }

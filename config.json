@@ -1,0 +1,14 @@
+    [
+        {
+            "maxOccurences": 5,
+            "percentThreshold": 0.5
+        },
+        {
+            "maxOccurences": 20,
+            "percentThreshold": 1
+        },
+        {
+            "maxOccurences": 60,
+            "percentThreshold": 2
+        }
+    ]
