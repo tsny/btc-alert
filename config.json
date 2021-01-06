@@ -1,5 +1,6 @@
 {
     "bootNotification": false,
+    "useDiscord": true,
     "thresholds": [
         {
             "threshold": 500

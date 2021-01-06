@@ -1,6 +1,8 @@
 ## Usage
 
-Build and run main.go
+`go get github.com/tsny/btc-alert`
+
+Follow the configuration section below, go build, and run it
 
 ## Configuration
 
@@ -10,12 +12,28 @@ more than the `percentThreshold` field.
 
 `occurence`s are minutes.
 
+### Discord
+
+If you have a Discord bot, you can redirect to there!
+
+![Example Screenshot](https://i.imgur.com/zbDfI9B.png)
+
+Config file will look like this: 
+
+```json
+{
+    "token": "Wgaisdg.OOLSIDG-kf2u8omFQGINI",
+    "channelId": "815218518838123",
+    "clearOnBoot": true
+}
+```
+
 ## Example
 
 ![Example Screenshot](https://i.imgur.com/lKS8kzG.png)
 
 ## Dependencies
 
-github.com/gen2brain/beeep - Notifications
-
-Yahoo Finance              - BTC Price Data
+- github.com/gen2brain/beeep     -  Notifications
+- github.com/bwmarrin/discordgo  -  Discord API
+- Yahoo Finance                  -  BTC Price Data

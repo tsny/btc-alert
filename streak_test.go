@@ -8,7 +8,7 @@ import (
 func TestThreshold(t *testing.T) {
 	c := threshold{0, 50}
 	price = 400
-	c.onThresholdReached()
+	c.onThresholdReached(true)
 }
 func TestNotification(t *testing.T) {
 	i := interval{5, 0, 3, 0, time.Now()}
