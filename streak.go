@@ -59,7 +59,6 @@ func (i *interval) onCompleted() {
 	changes := sf("Change: $%.2f | Percent: %.3f%%", diff, percent)
 	bannerText := sf("%s: %s%d Minutes Passed | %s | %s", getTime(), prefix, i.occurrences, totalChange, changes)
 	banner(bannerText)
-	discordMessage(bannerText, false)
 
 	if math.Abs(percent) > i.PercentThreshold {
 		hdr := sf("%d Minutes Passed | %.2f%%", i.MaxOccurences, i.PercentThreshold)
@@ -68,6 +67,8 @@ func (i *interval) onCompleted() {
 			discordMessage(hdr, true)
 			discordMessage(bannerText, false)
 		}
+	} else {
+		discordMessage(bannerText, false)
 	}
 }
 
@@ -84,18 +85,23 @@ func (t *threshold) onThresholdReached(breachedUp bool) {
 	if breachedUp {
 		emoji = up
 	}
+
 	hdr := sf("Price Threshold Breached: $%v", t.Threshold)
-	body := sf("%s %s: %s | %s", emoji, getTime(), hdr, formatPriceMovement(t.beginPrice, price))
-	banner("ALERT " + body)
+	str := "%s %s: %s | %s ($%.2f)"
+	body := sf(str, emoji, getTime(), hdr, fpm(t.beginPrice, price), t.beginPrice-price)
+
 	notif(hdr, body, "assets/warning.png")
+
+	banner("ALERT " + body)
+
 	if conf.UseDiscord {
-		discordMessage(hdr, false)
 		discordMessage(body, false)
 	}
 	t.beginPrice = price
 }
 
-func formatPriceMovement(begin, end float64) string {
+// fpm -- formatPriceMovement
+func fpm(begin, end float64) string {
 	return sf("$%.2f --> $%.2f", begin, end)
 }
 

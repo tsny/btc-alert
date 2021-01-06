@@ -4,13 +4,16 @@ import (
 	"encoding/json"
 	"math"
 	"net/http"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gen2brain/beeep"
 )
 
 const (
-	url     = "https://query1.finance.yahoo.com/v7/finance/quote?symbols=BTC-USD"
+	// url     = "https://query1.finance.yahoo.com/v7/finance/quote?symbols=BTC-USD"
+	url     = "https://api.coindesk.com/v1/bpi/currentprice.json"
 	up      = "🟩"
 	down    = "🟥"
 	neutral = "🟦"
@@ -57,13 +60,19 @@ func fetchData() float64 {
 		banner(err.Error())
 		return 0
 	}
-	var out TLR
+	var out CoindeskResponse
 	d := json.NewDecoder(res.Body)
 	d.Decode(&out)
 	if err != nil {
 		panic(err)
 	}
-	price = out.QuoteResponse.Result[0].RegularMarketPrice
+	// price = out.QuoteResponse.Result[0].RegularMarketPrice
+	s := strings.ReplaceAll(out.Bpi.USD.Rate, ",", "")
+	price, err = strconv.ParseFloat(s, 64)
+	if err != nil {
+		println(err.Error())
+		return -1
+	}
 	if lastPrice == 0 {
 		onFirstPriceFetched()
 	}

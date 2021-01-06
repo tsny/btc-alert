@@ -45,3 +45,4 @@ Config file will look like this:
 - github.com/gen2brain/beeep     -  Notifications
 - github.com/bwmarrin/discordgo  -  Discord API
 - Yahoo Finance                  -  BTC Price Data
+- CoindeskAPI                    -  BTC Price Data
