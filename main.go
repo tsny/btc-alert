@@ -26,7 +26,6 @@ var lastPrice = 0.00
 var price = 0.00
 
 func main() {
-	time.Sleep(2 * time.Second)
 	if conf.BootNotification {
 		beeep.Alert("BTC_ALERT", "STARTING UP", "assets/warning.png")
 	}
