@@ -12,6 +12,14 @@ more than the `percentThreshold` field.
 
 `occurence`s are minutes.
 
+### Desktop Notifications
+
+Example:
+
+![Example Screenshot](https://i.imgur.com/VZ6bHZU.png)
+
+Notifications work on both Mac and Windows
+
 ### Discord
 
 If you have a Discord bot, you can redirect to there!
