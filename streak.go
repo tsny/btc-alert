@@ -44,7 +44,7 @@ func getSummary() string {
 	if lastPrice == 0.00 {
 		return sf("%s %s: $%.2f \n", emoji, t, price)
 	}
-	return sf("%s %s: $%.2f | Change: $%.2f | Percent: %.3f%% \n", emoji, t, price, diff, percent)
+	return sf("%s %s: $%.2f | Chg: $%.2f | Percent: %.3f%% \n", emoji, t, price, diff, percent)
 }
 
 func (i *interval) onCompleted() {
@@ -56,19 +56,20 @@ func (i *interval) onCompleted() {
 	}
 
 	totalChange := sf("$%.2f --> $%.2f", i.beginPrice, price)
-	changes := sf("Change: $%.2f | Percent: %.3f%%", diff, percent)
-	bannerText := sf("%s: %s%d Minutes Passed | %s | %s", getTime(), prefix, i.occurrences, totalChange, changes)
+	changes := sf("Chg: $%.2f | Percent: %.3f%%", diff, percent)
+	bannerText := sf("%s: %s%d Min Passed | %s | %s", getTime(), prefix, i.occurrences, totalChange, changes)
 	banner(bannerText)
 
 	if math.Abs(percent) > i.PercentThreshold {
-		hdr := sf("%d Minutes Passed | %.2f%%", i.MaxOccurences, i.PercentThreshold)
+		hdr := sf("Last %d Min | %.2f%%", i.MaxOccurences, i.PercentThreshold)
 		notif(hdr, bannerText, "assets/warning.png")
 		if conf.UseDiscord {
-			discordMessage(hdr, true)
 			discordMessage(bannerText, false)
 		}
 	} else {
-		discordMessage(bannerText, false)
+		if conf.UseDiscord {
+			discordMessage(bannerText, false)
+		}
 	}
 }
 
@@ -86,7 +87,7 @@ func (t *threshold) onThresholdReached(breachedUp bool) {
 		emoji = up
 	}
 
-	hdr := sf("Price Threshold Breached: $%v", t.Threshold)
+	hdr := sf("Price Movement: $%v", t.Threshold)
 	str := "%s %s: %s | %s ($%.2f)"
 	body := sf(str, emoji, getTime(), hdr, fpm(t.beginPrice, price), t.beginPrice-price)
 

@@ -39,7 +39,7 @@ func discordMessage(str string, atAll bool) {
 		time.Sleep(1 * time.Second)
 	}
 	if atAll {
-		str += " @all"
+		str += " @everyone"
 	}
 	discordSession.ChannelMessageSend(discordConf.ChannelID, str)
 }
