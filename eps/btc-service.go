@@ -47,6 +47,7 @@ func (p *Publisher) StartListening() {
 	if p.active {
 		return
 	}
+	p.active = true
 	for {
 		p.fetchAndUpdatePrice()
 		time.Sleep(time.Duration(p.sleepDuration) * time.Second)
