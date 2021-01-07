@@ -1,6 +1,15 @@
 package coindesk
 
-import "time"
+import (
+	"encoding/json"
+	"net/http"
+	"strconv"
+	"strings"
+	"time"
+)
+
+// URL = Coindesk API - Current Price endpoint
+const URL = "https://api.coindesk.com/v1/bpi/currentprice.json"
 
 type Result struct {
 	Time       Time   `json:"time"`
@@ -43,4 +52,26 @@ type Bpi struct {
 	USD USD `json:"USD"`
 	GBP GBP `json:"GBP"`
 	EUR EUR `json:"EUR"`
+}
+
+// GetPrice retrieves Coindesk's price
+func GetPrice() float64 {
+	res, err := http.Get(URL)
+	if err != nil {
+		println(err)
+		return -1
+	}
+	var out Result
+	d := json.NewDecoder(res.Body)
+	d.Decode(&out)
+	if err != nil {
+		panic(err)
+	}
+	s := strings.ReplaceAll(out.Bpi.USD.Rate, ",", "")
+	price, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		println(err.Error())
+		return -1
+	}
+	return price
 }

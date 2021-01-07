@@ -2,42 +2,34 @@
 package eps
 
 import (
-	"encoding/json"
-	"net/http"
-	"strconv"
-	"strings"
 	"time"
-
-	"github.com/tsny/btc-alert/coindesk"
 )
 
 const (
 	// YahooURL = Yahoo Finance
 	YahooURL = "https://query1.finance.yahoo.com/v7/finance/quote?symbols=BTC-USD"
-	// CoindeskURL = Coindesk API - Current Price endpoint
-	CoindeskURL = "https://api.coindesk.com/v1/bpi/currentprice.json"
 )
 
 // Publisher periodically grabs data from its URL
 // and sends out updates with the price it gets back
 type Publisher struct {
-	url             string
 	priceUpdateSubs []func(new, old float64)
 	price           float64
 	lastPrice       float64
 	active          bool
 	sleepDuration   int
+	priceFetcher    func() float64
 }
 
 // New is a constructor
-func New(url string) *Publisher {
+func New(priceFetcher func() float64) *Publisher {
 	return &Publisher{
-		url,
 		[]func(new, old float64){},
 		0,
 		0,
 		false,
 		60,
+		priceFetcher,
 	}
 }
 
@@ -67,23 +59,8 @@ func (p *Publisher) onPriceUpdated() {
 }
 
 func (p *Publisher) fetchAndUpdatePrice() {
-	res, err := http.Get(p.url)
-	if err != nil {
-		println(err)
-		return
-	}
-	var out coindesk.Result
-	d := json.NewDecoder(res.Body)
-	d.Decode(&out)
-	if err != nil {
-		panic(err)
-	}
-	s := strings.ReplaceAll(out.Bpi.USD.Rate, ",", "")
+	newPrice := p.priceFetcher()
 	p.lastPrice = p.price
-	p.price, err = strconv.ParseFloat(s, 64)
-	if err != nil {
-		println(err.Error())
-		return
-	}
+	p.price = newPrice
 	p.onPriceUpdated()
 }
