@@ -6,6 +6,8 @@ Follow the configuration section below, go build, and run it
 
 ## Configuration
 
+Create a `config.json` file in the root of the project.
+
 `config.json` houses each 'interval' which represents an interval that is checked every minute.
 If an interval lapses, then a notification is sent if the absolute value of the overall percentage change in the asset is 
 more than the `percentThreshold` field.
