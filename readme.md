@@ -12,6 +12,40 @@ more than the `percentThreshold` field.
 
 `occurence`s are minutes.
 
+Config file will look like this: 
+
+```json
+{
+    "bootNotification": false,
+    "discord": {
+        "useDiscord": false,
+        "token": "token.WgvCew.ObvImI8RA0HAn-kf2u8omFQGINI",
+        "channelId": "715135158184218",
+        "clearOnBoot": false
+    },
+    "thresholds": [
+        {
+            "threshold": 500
+        }
+    ],
+    "intervals": [
+        {
+            "maxOccurences": 5,
+            "percentThreshold": 1
+        },
+        {
+            "maxOccurences": 20,
+            "percentThreshold": 2
+        },
+        {
+            "maxOccurences": 60,
+            "percentThreshold": 3
+        }
+    ]
+}
+```
+
+
 ### Desktop Notifications
 
 Example:
@@ -25,16 +59,6 @@ Notifications work on both Mac and Windows
 If you have a Discord bot, you can redirect to there!
 
 ![Example Screenshot](https://i.imgur.com/zbDfI9B.png)
-
-Config file will look like this: 
-
-```json
-{
-    "token": "Wgaisdg.OOLSIDG-kf2u8omFQGINI",
-    "channelId": "815218518838123",
-    "clearOnBoot": true
-}
-```
 
 ## Example
 

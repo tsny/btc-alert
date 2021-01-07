@@ -1,38 +1,16 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
 )
 
-type discordConfig struct {
-	Token              string `json:"token"`
-	ChannelID          string `json:"channelId"`
-	ClearChannelOnBoot bool   `json:"clearOnBoot"`
-}
-
 const secretFile = "discord.json"
 
-var discordConf *discordConfig
 var discordSession *discordgo.Session
-
-func initToken() string {
-	println("enabling discord integration")
-	bytes, err := ioutil.ReadFile("discord.json")
-	if err != nil {
-		panic(err)
-	}
-	json.Unmarshal(bytes, &discordConf)
-	if len(discordConf.Token) < 1 {
-		log.Fatalf("Didn't get a key from '%s'", secretFile)
-	}
-	return discordConf.Token
-}
 
 func discordMessage(str string, atAll bool) {
 	for discordSession == nil {
@@ -41,11 +19,11 @@ func discordMessage(str string, atAll bool) {
 	if atAll {
 		str += " @everyone"
 	}
-	discordSession.ChannelMessageSend(discordConf.ChannelID, str)
+	discordSession.ChannelMessageSend(conf.Discord.ChannelID, str)
 }
 
 func clearChannel() {
-	msgs, err := discordSession.ChannelMessages(discordConf.ChannelID, 100, "", "", "")
+	msgs, err := discordSession.ChannelMessages(conf.Discord.ChannelID, 100, "", "", "")
 	if err != nil {
 		log.Println(err.Error())
 		return
@@ -69,8 +47,9 @@ func initBot(token string) {
 		return
 	}
 	discordSession = dg
-	if discordConf.ClearChannelOnBoot {
+	if conf.Discord.ClearChannelOnBoot {
 		clearChannel()
 	}
+	println("Connected to Discord server")
 	dg.Close()
 }

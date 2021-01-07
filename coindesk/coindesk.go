@@ -1,8 +1,8 @@
-package main
+package coindesk
 
 import "time"
 
-type CoindeskResponse struct {
+type Result struct {
 	Time       Time   `json:"time"`
 	Disclaimer string `json:"disclaimer"`
 	ChartName  string `json:"chartName"`

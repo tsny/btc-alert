@@ -6,10 +6,10 @@ import (
 )
 
 func TestThreshold(t *testing.T) {
-	c := threshold{0, 50}
-	price = 400
-	c.onThresholdReached(true)
+	c := threshold{544, 400}
+	c.onThresholdReached(true, 300, 499)
 }
+
 func TestNotification(t *testing.T) {
 	i := interval{5, 0, 3, 0, time.Now()}
 	bannerText := "$33945.07 --> $33867.83 | Change: $-77.24 | Percent: -0.228%"
