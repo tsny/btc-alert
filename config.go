@@ -7,10 +7,11 @@ import (
 )
 
 type config struct {
-	Intervals        []*interval   `json:"intervals"`
-	Thresholds       []*threshold  `json:"thresholds"`
-	BootNotification bool          `json:"bootNotification"`
-	Discord          discordConfig `json:"discord"`
+	Intervals            []*interval   `json:"intervals"`
+	Thresholds           []*threshold  `json:"thresholds"`
+	BootNotification     bool          `json:"bootNotification"`
+	DesktopNotifications bool          `json:"desktopNotifications"`
+	Discord              discordConfig `json:"discord"`
 }
 
 type discordConfig struct {

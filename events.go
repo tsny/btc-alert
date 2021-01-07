@@ -44,8 +44,10 @@ func (i *interval) onCompleted(new, old float64) {
 	banner(bannerText)
 
 	if math.Abs(percent) > i.PercentThreshold {
-		hdr := sf("Last %d Min | %.2f%%", i.MaxOccurences, i.PercentThreshold)
-		notif(hdr, bannerText, "assets/warning.png")
+		if conf.DesktopNotifications {
+			hdr := sf("Last %d Min | %.2f%%", i.MaxOccurences, i.PercentThreshold)
+			notif(hdr, bannerText, "assets/warning.png")
+		}
 		if conf.Discord.Enabled {
 			discordMessage(bannerText, true)
 		}
@@ -66,7 +68,9 @@ func (t *threshold) onThresholdReached(breachedUp bool, new, old float64) {
 	str := "%s %s: %s | %s ($%.2f)"
 	body := sf(str, emoji, getTime(), hdr, fpm(t.beginPrice, new), new-t.beginPrice)
 
-	notif(hdr, body, "assets/warning.png")
+	if conf.DesktopNotifications {
+		notif(hdr, body, "assets/warning.png")
+	}
 	banner("ALERT " + body)
 
 	if conf.Discord.Enabled {
