@@ -36,8 +36,9 @@ func (l *listener) onPriceUpdated(p *eps.Publisher, c eps.Candlestick) {
 	s := c.String()
 	if c.Volatility() > conf.VolatilityAlert {
 		discordMessage(s, true)
+		fmt.Print(s + " <-- ALERT")
 	}
-	fmt.Print(c.String())
+	fmt.Print(s)
 
 	// if conf.Discord.Enabled {
 	// 	discordMessage(getSummaryNew(p, new, old), false)
