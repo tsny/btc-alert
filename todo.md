@@ -4,6 +4,4 @@
 
 ## Scratch
 
-So CLI Streamer, Discord Bot, Desktop Notifications are all services that have events that they care about
-
-So they should be initialized and setup their events and subscribe the publisher to them
+Config file should have different event descriptions for each currency instead of 3 generic ones

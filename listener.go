@@ -12,20 +12,28 @@ type listener struct {
 }
 
 func newListener(p *eps.Publisher, intervals []interval, thresholds []threshold) *listener {
-	var cpi []interval
-	var cpt []threshold
-	copy(intervals, cpi)
-	copy(thresholds, cpt)
-	l := listener{cpi, cpt}
+	// TODO: rethink this and get rid of this garbage
+	cpi := intervals
+	cpt := thresholds
+	l := listener{}
+	for _, i := range cpi {
+		l.intervals = append(l.intervals, i)
+	}
+	for _, t := range cpt {
+		l.thresholds = append(l.thresholds, t)
+	}
 	p.Subscribe(l.onPriceUpdated)
 	return &l
 }
 
-func (l *listener) onPriceUpdated(p *eps.Publisher, new, old float64) {
-	l.checkIntervals(p, new, old)
-	l.checkThresholds(p, new, old)
+func (l *listener) onPriceUpdated(p *eps.Publisher, c eps.Candlestick) {
+	if !c.Complete {
+		return
+	}
+	l.checkIntervals(p, c.Current, c.Previous)
+	l.checkThresholds(p, c.Current, c.Previous)
+	fmt.Print(c.String())
 
-	fmt.Print(getSummaryNew(p, new, old))
 	// if conf.Discord.Enabled {
 	// 	discordMessage(getSummaryNew(p, new, old), false)
 	// }
@@ -36,10 +44,12 @@ func (l *listener) checkIntervals(p *eps.Publisher, new, old float64) {
 		if interval.beginPrice == 0 {
 			l.intervals[i].beginPrice = new
 		}
+		// fmt.Printf("%d minute interval %s occurred %d times\n",
+		// 	interval.MaxOccurences, p.Source, interval.occurrences)
 		l.intervals[i].occurrences++
 		if interval.occurrences >= interval.MaxOccurences {
 			interval.onCompleted(p, new, old)
-			interval.reset(new)
+			l.intervals[i].reset(new)
 		}
 	}
 }
@@ -48,23 +58,12 @@ func (l *listener) checkThresholds(p *eps.Publisher, new, old float64) {
 	for i, t := range l.thresholds {
 		if t.beginPrice == 0 {
 			l.thresholds[i].beginPrice = new
+			continue
 		}
 		if new >= t.Threshold+t.beginPrice {
-			t.onThresholdReached(p, true, new, old)
+			l.thresholds[i].onThresholdReached(p, true, new, old)
 		} else if new <= t.beginPrice-t.Threshold {
-			t.onThresholdReached(p, false, new, old)
+			l.thresholds[i].onThresholdReached(p, false, new, old)
 		}
 	}
-}
-
-func getSummaryNew(p *eps.Publisher, new, old float64) string {
-	t := getTime()
-	emoji := getEmoji(new, old)
-	diff := new - old
-	percent := (diff / new) * 100
-	if old == 0.00 {
-		return sf("%s %s: (%s) $%.2f \n", emoji, t, p.Source, new)
-	}
-	s := "%s %s: (%s) $%.2f | Chg: $%.2f | Percent: %.3f%% \n"
-	return sf(s, emoji, t, p.Source, new, diff, percent)
 }

@@ -8,6 +8,7 @@ import (
 
 	"github.com/gen2brain/beeep"
 	"github.com/tsny/btc-alert/eps"
+	"github.com/tsny/btc-alert/utils"
 )
 
 var sf = fmt.Sprintf
@@ -25,6 +26,8 @@ type threshold struct {
 // then the interval lapses and onCompleted() is called
 type interval struct {
 	beginPrice       float64
+	low              float64
+	high             float64
 	occurrences      int
 	MaxOccurences    int     `json:"maxOccurences"`
 	PercentThreshold float64 `json:"percentThreshold"`
@@ -36,15 +39,15 @@ func (i *interval) onCompleted(p *eps.Publisher, new, old float64) {
 	percent := (diff / i.beginPrice) * 100
 	prefix := ""
 	if math.Abs(percent) > i.PercentThreshold {
-		prefix = sf("%s ALERT: %.2f%%! ", alert, i.PercentThreshold)
+		prefix = "ALERT"
 	}
 
 	totalChange := sf("$%.2f --> $%.2f", i.beginPrice, new)
 	changes := sf("Chg: $%.2f | Percent: %.3f%%", diff, percent)
 
-	bannerText := sf("%s: (%s) %s%d Min Passed | %s | %s",
-		getTime(), p.Source, prefix, i.occurrences, totalChange, changes)
-	banner(bannerText)
+	bannerText := sf("%s: (%s) %s%d Min | %s | %s",
+		utils.GetTime(), p.Source, prefix, i.occurrences, totalChange, changes)
+	utils.Banner(bannerText)
 
 	if math.Abs(percent) > i.PercentThreshold {
 		if conf.DesktopNotifications {
@@ -62,19 +65,19 @@ func (i *interval) onCompleted(p *eps.Publisher, new, old float64) {
 }
 
 func (t *threshold) onThresholdReached(p *eps.Publisher, breachedUp bool, new, old float64) {
-	emoji := down
+	emoji := utils.Down
 	if breachedUp {
-		emoji = up
+		emoji = utils.Up
 	}
 
 	priceMovement := sf("Price Movement: $%v", t.Threshold)
 	str := "%s %s: (%s) %s | %s ($%.2f)"
-	body := sf(str, emoji, getTime(), p.Source, priceMovement, fpm(t.beginPrice, new), new-t.beginPrice)
+	body := sf(str, emoji, utils.GetTime(), p.Source, priceMovement, fpm(t.beginPrice, new), new-t.beginPrice)
 
 	if conf.DesktopNotifications {
 		notif(priceMovement, body, "assets/warning.png")
 	}
-	banner("ALERT " + body)
+	utils.Banner("ALERT " + body)
 
 	if conf.Discord.Enabled {
 		discordMessage(body, false)
@@ -85,10 +88,6 @@ func (t *threshold) onThresholdReached(p *eps.Publisher, breachedUp bool, new, o
 // fpm -- formatPriceMovement
 func fpm(begin, end float64) string {
 	return sf("$%.2f --> $%.2f", begin, end)
-}
-
-func getTime() string {
-	return time.Now().Format(format)
 }
 
 func (i *interval) reset(new float64) {

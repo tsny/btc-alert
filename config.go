@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+
+	"github.com/tsny/btc-alert/utils"
 )
 
 type config struct {
@@ -29,13 +31,13 @@ func init() {
 		panic(err)
 	}
 	json.Unmarshal(bytes, &conf)
-	banner("btc-alert initializing")
+	utils.Banner("btc-alert initializing")
 	fmt.Printf("props: %d intervals | %d thresholds\n", len(conf.Intervals), len(conf.Thresholds))
 	for _, i := range conf.Intervals {
 		fmt.Printf("Interval -- Minutes: %d | Percentage Threshold: %v\n", i.MaxOccurences, i.PercentThreshold)
 	}
 	if conf.Discord.Enabled {
 		println("Discord enabled")
-		go initBot(conf.Discord.Token)
+		initBot(conf.Discord.Token)
 	}
 }

@@ -1,5 +1,10 @@
 package yahoo
 
+const (
+	// YahooURL = Yahoo Finance
+	YahooURL = "https://query1.finance.yahoo.com/v7/finance/quote?symbols=BTC-USD"
+)
+
 // Top level result
 type TLR struct {
 	QuoteResponse QuoteResponse `json:"quoteResponse"`

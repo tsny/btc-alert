@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/tsny/btc-alert/coinbase"
 	"github.com/tsny/btc-alert/eps"
+	"github.com/tsny/btc-alert/utils"
 )
 
 func main() {
@@ -25,13 +26,21 @@ func main() {
 	eth := eps.New(coinbase.ETH.GetPrice, "ETH")
 	_ = newListener(eth, conf.Intervals, conf.Thresholds)
 
+	etc := eps.New(coinbase.ETCClassic.GetPrice, "ETC")
+	_ = newListener(etc, conf.Intervals, conf.Thresholds)
+
+	eos := eps.New(coinbase.EOS.GetPrice, "EOS")
+	_ = newListener(eos, conf.Intervals, conf.Thresholds)
+
 	dash.StartProducing()
 	btc.StartProducing()
 	bch.StartProducing()
 	ltc.StartProducing()
 	eth.StartProducing()
+	etc.StartProducing()
+	eos.StartProducing()
 
-	banner("btc-alert initialized")
+	utils.Banner("btc-alert initialized")
 	for {
 	}
 }
