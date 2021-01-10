@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gen2brain/beeep"
+	"github.com/tsny/btc-alert/eps"
 )
 
 var sf = fmt.Sprintf
@@ -30,7 +31,7 @@ type interval struct {
 	startTime        time.Time
 }
 
-func (i *interval) onCompleted(new, old float64) {
+func (i *interval) onCompleted(p *eps.Publisher, new, old float64) {
 	diff := new - i.beginPrice
 	percent := (diff / i.beginPrice) * 100
 	prefix := ""
@@ -40,7 +41,9 @@ func (i *interval) onCompleted(new, old float64) {
 
 	totalChange := sf("$%.2f --> $%.2f", i.beginPrice, new)
 	changes := sf("Chg: $%.2f | Percent: %.3f%%", diff, percent)
-	bannerText := sf("%s: %s%d Min Passed | %s | %s", getTime(), prefix, i.occurrences, totalChange, changes)
+
+	bannerText := sf("%s: (%s) %s%d Min Passed | %s | %s",
+		getTime(), p.Source, prefix, i.occurrences, totalChange, changes)
 	banner(bannerText)
 
 	if math.Abs(percent) > i.PercentThreshold {
@@ -58,15 +61,15 @@ func (i *interval) onCompleted(new, old float64) {
 	}
 }
 
-func (t *threshold) onThresholdReached(breachedUp bool, new, old float64) {
+func (t *threshold) onThresholdReached(p *eps.Publisher, breachedUp bool, new, old float64) {
 	emoji := down
 	if breachedUp {
 		emoji = up
 	}
 
 	hdr := sf("Price Movement: $%v", t.Threshold)
-	str := "%s %s: %s | %s ($%.2f)"
-	body := sf(str, emoji, getTime(), hdr, fpm(t.beginPrice, new), new-t.beginPrice)
+	str := "%s %s: (%s) %s | %s ($%.2f)"
+	body := sf(str, emoji, getTime(), p.Source, hdr, fpm(t.beginPrice, new), new-t.beginPrice)
 
 	if conf.DesktopNotifications {
 		notif(hdr, body, "assets/warning.png")

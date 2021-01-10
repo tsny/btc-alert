@@ -2,6 +2,7 @@
 package eps
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -13,7 +14,8 @@ const (
 // Publisher periodically grabs data from its URL
 // and sends out updates with the price it gets back
 type Publisher struct {
-	priceUpdateSubs []func(new, old float64)
+	Source          string
+	priceUpdateSubs []func(*Publisher, float64, float64)
 	price           float64
 	lastPrice       float64
 	active          bool
@@ -22,9 +24,10 @@ type Publisher struct {
 }
 
 // New is a constructor
-func New(priceFetcher func() float64) *Publisher {
+func New(priceFetcher func() float64, source string) *Publisher {
 	return &Publisher{
-		[]func(new, old float64){},
+		source,
+		[]func(p *Publisher, new, old float64){},
 		0,
 		0,
 		false,
@@ -35,26 +38,28 @@ func New(priceFetcher func() float64) *Publisher {
 
 // StartListening loops and updates the price from the chosen exchange
 func (p *Publisher) StartListening() {
-	println("Exchange Price Publisher active")
+	fmt.Printf("%s -- Price Event Publisher active\n", p.Source)
 	if p.active {
 		return
 	}
 	p.active = true
-	for {
-		p.fetchAndUpdatePrice()
-		time.Sleep(time.Duration(p.sleepDuration) * time.Second)
-	}
+	go func() {
+		for {
+			p.fetchAndUpdatePrice()
+			time.Sleep(time.Duration(p.sleepDuration) * time.Second)
+		}
+	}()
 }
 
 // Subscribe allows services to subscribe to new BitCoin events
-func (p *Publisher) Subscribe(f func(new, old float64)) {
-	println("Publisher has new subscriber")
+func (p *Publisher) Subscribe(f func(p *Publisher, new, old float64)) {
+	fmt.Printf("%s Publisher has new subscriber\n", p.Source)
 	p.priceUpdateSubs = append(p.priceUpdateSubs, f)
 }
 
 func (p *Publisher) onPriceUpdated() {
 	for _, c := range p.priceUpdateSubs {
-		c(p.price, p.lastPrice)
+		c(p, p.price, p.lastPrice)
 	}
 }
 
