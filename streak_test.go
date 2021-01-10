@@ -5,10 +5,10 @@ import (
 	"time"
 )
 
-func TestThreshold(t *testing.T) {
-	c := threshold{544, 400}
-	c.onThresholdReached(true, 300, 499)
-}
+// func TestThreshold(t *testing.T) {
+// 	c := threshold{544, 400}
+// 	c.onThresholdReached(true, 300, 499)
+// }
 
 func TestNotification(t *testing.T) {
 	i := interval{5, 0, 3, 0, time.Now()}

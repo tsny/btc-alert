@@ -36,8 +36,8 @@ func New(priceFetcher func() float64, source string) *Publisher {
 	}
 }
 
-// StartListening loops and updates the price from the chosen exchange
-func (p *Publisher) StartListening() {
+// StartProducing loops and updates the price from the chosen exchange
+func (p *Publisher) StartProducing() {
 	fmt.Printf("%s -- Price Event Publisher active\n", p.Source)
 	if p.active {
 		return

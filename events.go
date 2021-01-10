@@ -67,12 +67,12 @@ func (t *threshold) onThresholdReached(p *eps.Publisher, breachedUp bool, new, o
 		emoji = up
 	}
 
-	hdr := sf("Price Movement: $%v", t.Threshold)
+	priceMovement := sf("Price Movement: $%v", t.Threshold)
 	str := "%s %s: (%s) %s | %s ($%.2f)"
-	body := sf(str, emoji, getTime(), p.Source, hdr, fpm(t.beginPrice, new), new-t.beginPrice)
+	body := sf(str, emoji, getTime(), p.Source, priceMovement, fpm(t.beginPrice, new), new-t.beginPrice)
 
 	if conf.DesktopNotifications {
-		notif(hdr, body, "assets/warning.png")
+		notif(priceMovement, body, "assets/warning.png")
 	}
 	banner("ALERT " + body)
 

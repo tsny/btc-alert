@@ -12,14 +12,18 @@ type listener struct {
 }
 
 func newListener(p *eps.Publisher, intervals []interval, thresholds []threshold) *listener {
-	i := &listener{intervals, thresholds}
-	p.Subscribe(i.onPriceUpdated)
-	return i
+	var cpi []interval
+	var cpt []threshold
+	copy(intervals, cpi)
+	copy(thresholds, cpt)
+	l := listener{cpi, cpt}
+	p.Subscribe(l.onPriceUpdated)
+	return &l
 }
 
-func (i *listener) onPriceUpdated(p *eps.Publisher, new, old float64) {
-	i.checkIntervals(p, new, old)
-	i.checkThresholds(p, new, old)
+func (l *listener) onPriceUpdated(p *eps.Publisher, new, old float64) {
+	l.checkIntervals(p, new, old)
+	l.checkThresholds(p, new, old)
 
 	fmt.Print(getSummaryNew(p, new, old))
 	// if conf.Discord.Enabled {
@@ -27,23 +31,23 @@ func (i *listener) onPriceUpdated(p *eps.Publisher, new, old float64) {
 	// }
 }
 
-func (i *listener) checkIntervals(p *eps.Publisher, new, old float64) {
-	for _, i := range i.intervals {
-		if i.beginPrice == 0 {
-			i.beginPrice = new
+func (l *listener) checkIntervals(p *eps.Publisher, new, old float64) {
+	for i, interval := range l.intervals {
+		if interval.beginPrice == 0 {
+			l.intervals[i].beginPrice = new
 		}
-		i.occurrences++
-		if i.occurrences >= i.MaxOccurences {
-			i.onCompleted(p, new, old)
-			i.reset(new)
+		l.intervals[i].occurrences++
+		if interval.occurrences >= interval.MaxOccurences {
+			interval.onCompleted(p, new, old)
+			interval.reset(new)
 		}
 	}
 }
 
-func (i *listener) checkThresholds(p *eps.Publisher, new, old float64) {
-	for _, t := range i.thresholds {
+func (l *listener) checkThresholds(p *eps.Publisher, new, old float64) {
+	for i, t := range l.thresholds {
 		if t.beginPrice == 0 {
-			t.beginPrice = new
+			l.thresholds[i].beginPrice = new
 		}
 		if new >= t.Threshold+t.beginPrice {
 			t.onThresholdReached(p, true, new, old)

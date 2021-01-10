@@ -35,6 +35,7 @@ func init() {
 		fmt.Printf("Interval -- Minutes: %d | Percentage Threshold: %v\n", i.MaxOccurences, i.PercentThreshold)
 	}
 	if conf.Discord.Enabled {
+		println("Discord enabled")
 		go initBot(conf.Discord.Token)
 	}
 }

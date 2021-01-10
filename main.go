@@ -25,11 +25,11 @@ func main() {
 	eth := eps.New(coinbase.ETH.GetPrice, "ETH")
 	_ = newListener(eth, conf.Intervals, conf.Thresholds)
 
-	dash.StartListening()
-	btc.StartListening()
-	bch.StartListening()
-	ltc.StartListening()
-	eth.StartListening()
+	dash.StartProducing()
+	btc.StartProducing()
+	bch.StartProducing()
+	ltc.StartProducing()
+	eth.StartProducing()
 
 	banner("btc-alert initialized")
 	for {
