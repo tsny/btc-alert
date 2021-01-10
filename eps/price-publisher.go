@@ -3,6 +3,7 @@ package eps
 
 import (
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/tsny/btc-alert/utils"
@@ -77,8 +78,9 @@ func (c Candlestick) String() string {
 	if c.Previous == 0.00 {
 		return fmt.Sprintf("%s %s: (%s) $%.2f \n", emoji, now, c.Source, c.Current)
 	}
-	s := "%s %s: (%s) $%.2f | High: $%.2f | Low: $%.2f | Chg: $%.2f | Percent: %.3f%% \n"
-	return fmt.Sprintf(s, emoji, now, c.Source, c.Current, c.High, c.Low, diff, percent)
+	volatility := (math.Abs(c.High-c.Low) / c.Close) * 100
+	s := "%s %s: (%s) $%.2f | High: $%.2f | Low: $%.2f | Chg: $%.2f | Percent: %.3f%% | Volatility: %.3f%% \n"
+	return fmt.Sprintf(s, emoji, now, c.Source, c.Current, c.High, c.Low, diff, percent, volatility)
 }
 
 // New is a constructor
