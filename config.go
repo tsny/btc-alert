@@ -11,6 +11,7 @@ import (
 type config struct {
 	Intervals            []interval    `json:"intervals"`
 	Thresholds           []threshold   `json:"thresholds"`
+	VolatilityAlert      float64       `json:"volatilityAlert"`
 	BootNotification     bool          `json:"bootNotification"`
 	DesktopNotifications bool          `json:"desktopNotifications"`
 	Discord              discordConfig `json:"discord"`

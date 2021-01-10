@@ -78,9 +78,8 @@ func (c Candlestick) String() string {
 	if c.Previous == 0.00 {
 		return fmt.Sprintf("%s %s: (%s) $%.2f \n", emoji, now, c.Source, c.Current)
 	}
-	volatility := (math.Abs(c.High-c.Low) / c.Close) * 100
 	s := "%s %s: (%s) $%.2f | High: $%.2f | Low: $%.2f | Chg: $%.2f | Percent: %.3f%% | Volatility: %.3f%% \n"
-	return fmt.Sprintf(s, emoji, now, c.Source, c.Current, c.High, c.Low, diff, percent, volatility)
+	return fmt.Sprintf(s, emoji, now, c.Source, c.Current, c.High, c.Low, diff, percent, c.Volatility())
 }
 
 // New is a constructor
@@ -107,6 +106,10 @@ func (p *Publisher) StartProducing() {
 			time.Sleep(time.Duration(p.sleepDuration) * time.Second)
 		}
 	}()
+}
+
+func (c Candlestick) Volatility() float64 {
+	return (math.Abs(c.High-c.Low) / c.Close) * 100
 }
 
 // Subscribe allows services to subscribe to new BitCoin events

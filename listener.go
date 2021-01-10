@@ -32,6 +32,11 @@ func (l *listener) onPriceUpdated(p *eps.Publisher, c eps.Candlestick) {
 	}
 	l.checkIntervals(p, c.Current, c.Previous)
 	l.checkThresholds(p, c.Current, c.Previous)
+
+	s := c.String()
+	if c.Volatility() > conf.VolatilityAlert {
+		discordMessage(s, true)
+	}
 	fmt.Print(c.String())
 
 	// if conf.Discord.Enabled {
