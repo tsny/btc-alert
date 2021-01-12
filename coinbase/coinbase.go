@@ -11,7 +11,7 @@ import (
 // Source is a type alias for strings
 type Source string
 
-type result struct {
+type Ticker struct {
 	TradeID int       `json:"trade_id"`
 	Price   string    `json:"price"`
 	Size    string    `json:"size"`
@@ -21,32 +21,23 @@ type result struct {
 	Time    time.Time `json:"time"`
 }
 
-const (
-	// URL is the Coinbase Pro API base URL
-	URL = "https://api.pro.coinbase.com/products/%s/ticker"
-	// BTC is Bitcoin
-	BTC Source = "BTC-USD"
-	// BCH is Bitcoin Cash
-	BCH Source = "BCH-USD"
-	// Dash is Dash
-	Dash Source = "DASH-USD"
-	// ETH is Ethereum
-	ETH Source = "ETH-USD"
-	// EOS is EOS
-	EOS Source = "EOS-USD"
-	// ETCClassic is Ethererum Classic
-	ETCClassic Source = "ETC-USD"
-	// ZEC is ZEC
-	ZEC Source = "ZEC-USD"
-	// MKR is Maker
-	MKR Source = "MKR-USD"
-	// XLM is Stellar
-	XLM Source = "XLM-USD"
-	// ATOM is Cosmos
-	ATOM Source = "ATOM-USD"
-	// LTC is Litecoin
-	LTC Source = "LTC-USD"
-)
+// CryptoMap is a map of the Coin's simple name to its ticker
+var CryptoMap = map[string]Source{
+	"BTC":  "BTC-USD",
+	"BCH":  "BCH-USD",
+	"DASH": "DASH-USD",
+	"ETH":  "ETH-USD",
+	"EOS":  "EOS-USD",
+	"ETC":  "ETC-USD",
+	"ZEC":  "ZEC-USD",
+	"MKR":  "MKR-USD",
+	"XLM":  "XLM-USD",
+	"ATOM": "ATOM-USD",
+	"LTC":  "LTC-USD",
+}
+
+// URL is the Coinbase Ticker API URL
+const URL = "https://api.pro.coinbase.com/products/%s/ticker"
 
 // GetPrice retrieves Coinbase's price
 func (s Source) GetPrice() float64 {
@@ -55,7 +46,7 @@ func (s Source) GetPrice() float64 {
 		println(err)
 		return -1
 	}
-	var out result
+	var out Ticker
 	d := json.NewDecoder(res.Body)
 	d.Decode(&out)
 	if err != nil {

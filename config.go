@@ -18,10 +18,9 @@ type config struct {
 }
 
 type discordConfig struct {
-	Token              string `json:"token"`
-	Enabled            bool   `json:"enabled"`
-	ChannelID          string `json:"channelId"`
-	ClearChannelOnBoot bool   `json:"clearOnBoot"`
+	Token     string `json:"token"`
+	Enabled   bool   `json:"enabled"`
+	ChannelID string `json:"channelId"`
 }
 
 var conf config
@@ -39,6 +38,6 @@ func init() {
 	}
 	if conf.Discord.Enabled {
 		println("Discord enabled")
-		initBot(conf.Discord.Token)
+		cryptoBot = initBot(conf.Discord.Token)
 	}
 }

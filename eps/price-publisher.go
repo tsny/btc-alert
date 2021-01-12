@@ -78,23 +78,28 @@ func (c Candlestick) String() string {
 	if c.Previous == 0.00 {
 		return fmt.Sprintf("%s %s: (%s) $%.2f \n", emoji, now, c.Source, c.Current)
 	}
-	s := "%s %s: (%s) $%.2f | High: $%.2f | Low: $%.2f | Chg: $%.2f | Percent: %.3f%% | Volatility: %.3f%% \n"
+	s := "%s %s: (%s) $%.2f | High: $%.2f | Low: $%.2f | Chg: $%.2f | Percent: %.2f%% | Volatility: %.2f%% \n"
 	return fmt.Sprintf(s, emoji, now, c.Source, c.Current, c.High, c.Low, diff, percent, c.Volatility())
 }
 
 // New is a constructor
-func New(priceFetcher func() float64, source string) *Publisher {
-	return &Publisher{
+func New(priceFetcher func() float64, source string, start bool) *Publisher {
+	p := &Publisher{
 		Source:        source,
 		callbacks:     []func(p *Publisher, c Candlestick){},
 		sleepDuration: 5,
 		priceFetcher:  priceFetcher,
 	}
+	if start {
+		p.StartProducing()
+	}
+	return p
 }
 
 // StartProducing loops and updates the price from the chosen exchange
 func (p *Publisher) StartProducing() {
-	fmt.Printf("%s -- Price Event Publisher active\n", p.Source)
+	price := p.priceFetcher()
+	fmt.Printf("%s -- Price Publisher active -- Current: %.2f\n", p.Source, price)
 	if p.active {
 		fmt.Printf("%s -- Price Event Publisher is ALREADY active\n", p.Source)
 		return
@@ -108,6 +113,7 @@ func (p *Publisher) StartProducing() {
 	}()
 }
 
+// Volatility returns the percent difference between the high/low and close
 func (c Candlestick) Volatility() float64 {
 	return (math.Abs(c.High-c.Low) / c.Close) * 100
 }
