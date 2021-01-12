@@ -21,6 +21,15 @@ type Ticker struct {
 	Time    time.Time `json:"time"`
 }
 
+type OneDayCandle struct {
+	Open        string `json:"open"`
+	High        string `json:"high"`
+	Low         string `json:"low"`
+	Volume      string `json:"volume"`
+	Last        string `json:"last"`
+	Volume30Day string `json:"volume_30day"`
+}
+
 // CryptoMap is a map of the Coin's simple name to its ticker
 var CryptoMap = map[string]Source{
 	"BTC":  "BTC-USD",
@@ -36,12 +45,15 @@ var CryptoMap = map[string]Source{
 	"LTC":  "LTC-USD",
 }
 
-// URL is the Coinbase Ticker API URL
-const URL = "https://api.pro.coinbase.com/products/%s/ticker"
+// TickerURL is the Coinbase Ticker API URL
+const TickerURL = "https://api.pro.coinbase.com/products/%s/ticker"
+
+// DailyURL is the Coinbase Ticker API URL that returns the stats for the last 24h
+const DailyURL = "https://api.pro.coinbase.com/products/%s/stats"
 
 // GetPrice retrieves Coinbase's price
 func (s Source) GetPrice() float64 {
-	res, err := http.Get(fmt.Sprintf(URL, s))
+	res, err := http.Get(fmt.Sprintf(TickerURL, s))
 	if err != nil {
 		println(err)
 		return -1
@@ -54,4 +66,19 @@ func (s Source) GetPrice() float64 {
 	}
 	p, _ := strconv.ParseFloat(out.Price, 2)
 	return p
+}
+
+func (s Source) Get24Hour() *OneDayCandle {
+	res, err := http.Get(fmt.Sprintf(DailyURL, s))
+	if err != nil {
+		println(err)
+		return nil
+	}
+	var out OneDayCandle
+	d := json.NewDecoder(res.Body)
+	d.Decode(&out)
+	if err != nil {
+		return nil
+	}
+	return &out
 }

@@ -87,17 +87,10 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 	}
 	parts := strings.Split(msg[1:], " ")
 
-	if parts[0] != "sub" {
-		return
-	}
 	if len(parts) < 2 {
 		return
 	}
 
-	price, err := strconv.ParseFloat(parts[2], 3)
-	if err != nil {
-		return
-	}
 	ticker := strings.ToUpper(parts[1])
 	if i := strings.Index(ticker, "-"); i == -1 {
 		ticker = ticker + "-USD"
@@ -108,8 +101,35 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 		println("Couldn't find publisher for " + ticker)
 		return
 	}
-	cb.SubscribeUser(m.Author.Username, price, pub)
-	str := "Subscribing %s to %s price point %.2f"
-	discordMessage := fmt.Sprintf(str, m.Author.Username, pub.Source, price)
-	cb.SendMessage(discordMessage, "")
+
+	if parts[0] == "sub" {
+		if len(parts) < 3 {
+			return
+		}
+		price, err := strconv.ParseFloat(parts[2], 3)
+		if err != nil {
+			return
+		}
+		cb.SubscribeUser(m.Author.Username, price, pub)
+		str := "Subscribing %s to %s price point %.2f"
+		discordMessage := fmt.Sprintf(str, m.Author.Username, pub.Source, price)
+		cb.SendMessage(discordMessage, "")
+	}
+
+	if parts[0] == "get" {
+		cb.SendMessage(pub.CurrentCandle.String(), "")
+	}
+
+	if parts[0] == "trade" {
+		cdl := pub.CurrentCandle
+		fee := cdl.Current * .01
+		str := fmt.Sprintf("%s -- $%.2f -- Fee: $%.2f -- 2%% Gain: $%.2f", cdl.Source, cdl.Current, fee, fee*2)
+		cb.SendMessage(str, "")
+	}
+
+	if parts[0] == "stat" {
+		d := convTicker.Get24Hour()
+		str := fmt.Sprintf("24 Hour Status: %s -- High: $%s | Low: $%s | Open $%s", ticker, d.High, d.Low, d.Open)
+		cb.SendMessage(str, "")
+	}
 }

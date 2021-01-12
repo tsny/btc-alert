@@ -62,6 +62,26 @@ If you have a Discord bot, you can redirect to there!
 
 ![Example Screenshot](https://i.imgur.com/zbDfI9B.png)
 
+#### Discord Commands
+
+{ticker}'s can be either be something like BTC or BTC-USD or btc
+
+`!get {ticker}`
+
+Returns the last minute candlestick for the provided ticker
+
+`!trade {ticker}`
+
+Returns the current price with a 1% and 2% difference for helping calculate trade costs
+
+`!sub {ticker} {price}`
+
+Subscribes to the event of a certin price point
+
+`!stat {ticker}`
+
+Returns the last 24 hour candlestick
+
 ## Example
 
 ![Example Screenshot](https://i.imgur.com/lKS8kzG.png)
