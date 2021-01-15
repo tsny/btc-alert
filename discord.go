@@ -37,10 +37,10 @@ func (cb *CryptoBot) SubscribeUser(userID string, target float64, p *eps.Publish
 		}
 		str := fmt.Sprintf("/tts %s Price Target %.2f Reached", p.Source, target)
 		if startedBelow && candle.Current > target {
-			cb.SendMessage(str, userID)
+			cb.SendMessage(str, userID, true)
 			x.active = false
 		} else if !startedBelow && candle.Current < target {
-			cb.SendMessage(str, userID)
+			cb.SendMessage(str, userID, true)
 			x.active = false
 		}
 	}
@@ -48,9 +48,20 @@ func (cb *CryptoBot) SubscribeUser(userID string, target float64, p *eps.Publish
 }
 
 // SendMessage sends a discord message with an optional mention
-func (cb *CryptoBot) SendMessage(str string, mention string) {
+func (cb *CryptoBot) SendMessage(str string, mention string, tts bool) {
 	if mention != "" {
-		str += " @" + mention
+		if mention == "everyone" {
+			str += " @" + mention
+		} else {
+			msg := discordgo.MessageSend{
+				Content: str,
+				TTS:     tts,
+				AllowedMentions: &discordgo.MessageAllowedMentions{
+					Users: []string{mention},
+				},
+			}
+			cb.ds.ChannelMessageSendComplex(conf.Discord.ChannelID, &msg)
+		}
 	}
 	cb.ds.ChannelMessageSend(conf.Discord.ChannelID, str)
 }
@@ -113,23 +124,23 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 		cb.SubscribeUser(m.Author.Username, price, pub)
 		str := "Subscribing %s to %s price point %.2f"
 		discordMessage := fmt.Sprintf(str, m.Author.Username, pub.Source, price)
-		cb.SendMessage(discordMessage, "")
+		cb.SendMessage(discordMessage, "", false)
 	}
 
 	if parts[0] == "get" {
-		cb.SendMessage(pub.CurrentCandle.String(), "")
+		cb.SendMessage(pub.CurrentCandle.String(), "", false)
 	}
 
 	if parts[0] == "trade" {
 		cdl := pub.CurrentCandle
 		fee := cdl.Current * .01
 		str := fmt.Sprintf("%s -- $%.2f -- Fee: $%.2f -- 2%% Gain: $%.2f", cdl.Source, cdl.Current, fee, fee*2)
-		cb.SendMessage(str, "")
+		cb.SendMessage(str, "", false)
 	}
 
 	if parts[0] == "stat" {
 		d := convTicker.Get24Hour()
 		str := fmt.Sprintf("24 Hour Status: %s -- High: $%s | Low: $%s | Open $%s", ticker, d.High, d.Low, d.Open)
-		cb.SendMessage(str, "")
+		cb.SendMessage(str, "", false)
 	}
 }

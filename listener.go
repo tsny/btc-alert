@@ -35,7 +35,7 @@ func (l *listener) onPriceUpdated(p *eps.Publisher, c eps.Candlestick) {
 
 	s := c.String()
 	if c.Volatility() > conf.VolatilityAlert {
-		cryptoBot.SendMessage(s, "everyone")
+		cryptoBot.SendMessage(s, "everyone", false)
 		fmt.Print(s + " <-- ALERT")
 	}
 	fmt.Print(s)

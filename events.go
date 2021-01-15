@@ -55,11 +55,11 @@ func (i *interval) onCompleted(p *eps.Publisher, new, old float64) {
 			notif(hdr, bannerText, "assets/warning.png")
 		}
 		if conf.Discord.Enabled {
-			cryptoBot.SendMessage(bannerText, "everyone")
+			cryptoBot.SendMessage(bannerText, "everyone", false)
 		}
 	} else {
 		if conf.Discord.Enabled {
-			cryptoBot.SendMessage(bannerText, "")
+			cryptoBot.SendMessage(bannerText, "", false)
 		}
 	}
 }
@@ -80,7 +80,7 @@ func (t *threshold) onThresholdReached(p *eps.Publisher, breachedUp bool, new, o
 	utils.Banner("ALERT " + body)
 
 	if conf.Discord.Enabled {
-		cryptoBot.SendMessage(body, "")
+		cryptoBot.SendMessage(body, "", false)
 	}
 	t.beginPrice = new
 }
