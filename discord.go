@@ -63,8 +63,9 @@ func (cb *CryptoBot) SendMessage(str string, userMention string, tts bool) {
 			}
 			cb.ds.ChannelMessageSendComplex(conf.Discord.ChannelID, &msg)
 		}
+	} else {
+		cb.ds.ChannelMessageSend(conf.Discord.ChannelID, str)
 	}
-	cb.ds.ChannelMessageSend(conf.Discord.ChannelID, str)
 }
 
 func initBot(token string) *CryptoBot {
