@@ -35,7 +35,7 @@ func (cb *CryptoBot) SubscribeUser(userID string, target float64, p *eps.Publish
 		if !x.active {
 			return
 		}
-		str := fmt.Sprintf("/tts %s Price Target %.2f Reached", p.Source, target)
+		str := fmt.Sprintf("%s Price Target %.2f Reached", p.Source, target)
 		if startedBelow && candle.Current > target {
 			cb.SendMessage(str, userID, true)
 			x.active = false
@@ -48,16 +48,17 @@ func (cb *CryptoBot) SubscribeUser(userID string, target float64, p *eps.Publish
 }
 
 // SendMessage sends a discord message with an optional mention
-func (cb *CryptoBot) SendMessage(str string, mention string, tts bool) {
-	if mention != "" {
-		if mention == "everyone" {
-			str += " @" + mention
+func (cb *CryptoBot) SendMessage(str string, userMention string, tts bool) {
+	if userMention != "" {
+		if userMention == "everyone" {
+			str += " @" + userMention
 		} else {
 			msg := discordgo.MessageSend{
-				Content: str,
+				Content: str + " @" + userMention,
 				TTS:     tts,
 				AllowedMentions: &discordgo.MessageAllowedMentions{
-					Users: []string{mention},
+					Users: []string{"84090395092353024"},
+					Parse: []discordgo.AllowedMentionType{discordgo.AllowedMentionTypeEveryone},
 				},
 			}
 			cb.ds.ChannelMessageSendComplex(conf.Discord.ChannelID, &msg)
