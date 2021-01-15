@@ -35,7 +35,7 @@ func (cb *CryptoBot) SubscribeUser(userID string, target float64, p *eps.Publish
 		if !x.active {
 			return
 		}
-		str := fmt.Sprintf("%s Price Target %.2f Reached", p.Source, target)
+		str := fmt.Sprintf("/tts %s Price Target %.2f Reached", p.Source, target)
 		if startedBelow && candle.Current > target {
 			cb.SendMessage(str, userID)
 			x.active = false

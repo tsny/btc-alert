@@ -46,6 +46,7 @@ var CryptoMap = map[string]Source{
 }
 
 // TickerURL is the Coinbase Ticker API URL
+// https://api.pro.coinbase.com/products/BTC-USD/ticker
 const TickerURL = "https://api.pro.coinbase.com/products/%s/ticker"
 
 // DailyURL is the Coinbase Ticker API URL that returns the stats for the last 24h
