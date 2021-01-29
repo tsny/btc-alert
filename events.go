@@ -42,8 +42,8 @@ func (i *interval) onCompleted(p *eps.Publisher, new, old float64) {
 		prefix = "ALERT"
 	}
 
-	totalChange := sf("$%.2f --> $%.2f", i.beginPrice, new)
-	changes := sf("Chg: $%.2f | Percent: %.3f%%", diff, percent)
+	totalChange := sf("%s --> %s", utils.Fts(i.beginPrice), utils.Fts(new))
+	changes := sf("Chg: %s | Percent: %.3f%%", utils.Fts(diff), percent)
 
 	bannerText := sf("%s: (%s) %s%d Min | %s | %s",
 		utils.GetTime(), p.Source, prefix, i.occurrences, totalChange, changes)
