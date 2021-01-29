@@ -92,7 +92,7 @@ func (s Source) GetPrice() float64 {
 	var out TLR
 	d := json.NewDecoder(res.Body)
 	d.Decode(&out)
-	if err != nil {
+	if err != nil || len(out.QuoteResponse.Result) == 0 {
 		return -1
 	}
 	return out.QuoteResponse.Result[0].RegularMarketPrice

@@ -101,8 +101,8 @@ func New(priceFetcher func() float64, source string, start bool, sleepDur int) *
 
 // StartProducing loops and updates the price from the chosen exchange
 func (p *Publisher) StartProducing() {
-	price := p.priceFetcher()
-	fmt.Printf("%s -- Price Publisher active -- Current: %.2f\n", p.Source, price)
+	p.fetchAndUpdatePrice()
+	fmt.Printf("%s -- Price Publisher active -- Current: %.2f\n", p.Source, p.CurrentCandle.Current)
 	if p.active {
 		fmt.Printf("%s -- Price Event Publisher is ALREADY active\n", p.Source)
 		return

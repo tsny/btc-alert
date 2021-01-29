@@ -8,6 +8,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/tsny/btc-alert/coinbase"
 	"github.com/tsny/btc-alert/eps"
+	"github.com/tsny/btc-alert/yahoo"
 )
 
 type CryptoBot struct {
@@ -125,14 +126,36 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 	}
 
 	ticker := strings.ToUpper(parts[1])
+	origTicker := ticker
 	if i := strings.Index(ticker, "-"); i == -1 {
 		ticker = ticker + "-USD"
 	}
 	convTicker := coinbase.Source(ticker)
 	pub, ok := PublisherMap[convTicker]
+
+	// If the publisher doesn't already exist try and find a new one
 	if !ok {
-		println("Couldn't find publisher for " + ticker)
-		return
+
+		t := yahoo.Source(origTicker)
+		if t.GetPrice() > 0 {
+			pub = eps.New(t.GetPrice, origTicker, true, 30)
+			PublisherMap[coinbase.Source(origTicker)] = pub
+			println("Made new publisher for subscriber -- " + origTicker)
+
+		} else {
+			t = yahoo.Source(ticker)
+			if t.GetPrice() > 0 {
+				pub = eps.New(t.GetPrice, string(convTicker), true, 30)
+				PublisherMap[convTicker] = pub
+				println("Made new publisher for subscriber -- " + convTicker)
+			} else {
+				println("Couldn't find publisher for " + ticker)
+				return
+			}
+
+		}
+	} else {
+		println("Found existing publisher for " + ticker)
 	}
 
 	if parts[0] == "sub" {
