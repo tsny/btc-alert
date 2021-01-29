@@ -27,7 +27,7 @@ func newListener(p *eps.Publisher, intervals []interval, thresholds []threshold)
 }
 
 func (l *listener) onPriceUpdated(p *eps.Publisher, c eps.Candlestick) {
-	if !c.Complete {
+	if !c.Complete || c.Current == 0 {
 		return
 	}
 	go l.checkIntervals(p, c.Current, c.Previous)
