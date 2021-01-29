@@ -1,8 +1,16 @@
 package yahoo
 
+import (
+	"encoding/json"
+	"fmt"
+	"net/http"
+)
+
+type Source string
+
 const (
 	// YahooURL = Yahoo Finance
-	YahooURL = "https://query1.finance.yahoo.com/v7/finance/quote?symbols=BTC-USD"
+	YahooURL = "https://query1.finance.yahoo.com/v7/finance/quote?symbols=%s"
 )
 
 // Top level result
@@ -72,4 +80,20 @@ type Result struct {
 type QuoteResponse struct {
 	Result []Result    `json:"result"`
 	Error  interface{} `json:"error"`
+}
+
+// GetPrice retrieves Coinbase's price
+func (s Source) GetPrice() float64 {
+	res, err := http.Get(fmt.Sprintf(YahooURL, s))
+	if err != nil {
+		println(err)
+		return -1
+	}
+	var out TLR
+	d := json.NewDecoder(res.Body)
+	d.Decode(&out)
+	if err != nil {
+		return -1
+	}
+	return out.QuoteResponse.Result[0].RegularMarketPrice
 }

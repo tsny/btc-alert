@@ -83,11 +83,11 @@ func (c Candlestick) String() string {
 }
 
 // New is a constructor
-func New(priceFetcher func() float64, source string, start bool) *Publisher {
+func New(priceFetcher func() float64, source string, start bool, sleepDur int) *Publisher {
 	p := &Publisher{
 		Source:        source,
 		callbacks:     []func(p *Publisher, c Candlestick){},
-		sleepDuration: 5,
+		sleepDuration: sleepDur,
 		priceFetcher:  priceFetcher,
 	}
 	if start {

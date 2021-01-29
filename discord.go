@@ -30,12 +30,12 @@ var cryptoBot *CryptoBot
 func (cb *CryptoBot) SubscribeUser(userID string, target float64, p *eps.Publisher) {
 	startedBelow := p.CurrentCandle.Current < target
 	x := priceAlert{userID, p, target, p.CurrentCandle.Current, true, startedBelow}
-	fmt.Printf("Subscribing %s to %s price point %.2f\n", userID, p.Source, target)
+	fmt.Printf("Subscribing %s to %s price point %.4f\n", userID, p.Source, target)
 	f := func(p *eps.Publisher, candle eps.Candlestick) {
 		if !x.active {
 			return
 		}
-		str := fmt.Sprintf("%s Price Target %.2f Reached", p.Source, target)
+		str := fmt.Sprintf("%s Price Target %.4f Reached", p.Source, target)
 		if startedBelow && candle.Current > target {
 			cb.SendMessage(str, userID, true)
 			x.active = false
@@ -124,7 +124,7 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 			return
 		}
 		cb.SubscribeUser(m.Author.Username, price, pub)
-		str := "Subscribing %s to %s price point %.2f"
+		str := "Subscribing %s to %s price point %.4f"
 		discordMessage := fmt.Sprintf(str, m.Author.Username, pub.Source, price)
 		cb.SendMessage(discordMessage, "", false)
 	}
