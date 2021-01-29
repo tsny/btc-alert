@@ -48,23 +48,32 @@ func (cb *CryptoBot) SubscribeUser(userID string, target float64, p *eps.Publish
 }
 
 // SendMessage sends a discord message with an optional mention
-func (cb *CryptoBot) SendMessage(str string, userMention string, tts bool) {
-	if userMention != "" {
-		if userMention == "everyone" {
-			str += " @" + userMention
-		} else {
-			msg := discordgo.MessageSend{
-				Content: str + " @" + userMention,
-				TTS:     tts,
-				AllowedMentions: &discordgo.MessageAllowedMentions{
-					Users: []string{"84090395092353024"},
-					Parse: []discordgo.AllowedMentionType{discordgo.AllowedMentionTypeEveryone},
-				},
-			}
-			cb.ds.ChannelMessageSendComplex(conf.Discord.ChannelID, &msg)
-		}
-	} else {
+func (cb *CryptoBot) SendMessage(str string, userID string, tts bool) {
+
+	if userID == "" {
 		cb.ds.ChannelMessageSend(conf.Discord.ChannelID, str)
+		return
+	}
+
+	mention := userID
+	var users []string
+	if userID == "everyone" {
+		mention = " @everyone"
+	} else {
+		mention = " <@" + userID + ">"
+		users = append(users, userID)
+	}
+	msg := discordgo.MessageSend{
+		Content: str + mention,
+		TTS:     tts,
+		AllowedMentions: &discordgo.MessageAllowedMentions{
+			Users: users,
+			Parse: []discordgo.AllowedMentionType{discordgo.AllowedMentionTypeEveryone},
+		},
+	}
+	_, err := cb.ds.ChannelMessageSendComplex(conf.Discord.ChannelID, &msg)
+	if err != nil {
+		println(err.Error())
 	}
 }
 
@@ -100,6 +109,17 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 	}
 	parts := strings.Split(msg[1:], " ")
 
+	// Testing funcs
+	if parts[0] == "atme" {
+		cb.SendMessage("test", m.Author.ID, false)
+		return
+	}
+
+	if parts[0] == "atall" {
+		cb.SendMessage("test", "everyone", false)
+		return
+	}
+
 	if len(parts) < 2 {
 		return
 	}
@@ -123,7 +143,7 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 		if err != nil {
 			return
 		}
-		cb.SubscribeUser(m.Author.Username, price, pub)
+		cb.SubscribeUser(m.Author.ID, price, pub)
 		str := "Subscribing %s to %s price point %.4f"
 		discordMessage := fmt.Sprintf(str, m.Author.Username, pub.Source, price)
 		cb.SendMessage(discordMessage, "", false)
