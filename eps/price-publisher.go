@@ -78,9 +78,9 @@ func (c Candlestick) String() string {
 	if c.Previous == 0.00 {
 		return fmt.Sprintf("%s %s: (%s) $%.2f \n", emoji, now, c.Source, c.Current)
 	}
-	s := "%s %s: (%s) $%.2f | High: $%.2f | Low: $%.2f | Chg: $%.2f | Percent: %.2f%% | Volatility: %.2f%% \n"
+	s := "%s %s: (%s) $%.2f | High: $%.2f | Low: $%.2f | Chg: $%.2f | Percent: %.2f%% | Volatility: %.2f%%"
 	if c.Current < 1 {
-		s = "%s %s: (%s) $%.5f | High: $%.5f | Low: $%.5f | Chg: $%.5f | Percent: %.2f%% | Volatility: %.2f%% \n"
+		s = "%s %s: (%s) $%.5f | High: $%.5f | Low: $%.5f | Chg: $%.5f | Percent: %.2f%% | Volatility: %.2f%%"
 	}
 	return fmt.Sprintf(s, emoji, now, c.Source, c.Current, c.High, c.Low, diff, percent, c.Volatility())
 }
