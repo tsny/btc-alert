@@ -58,7 +58,7 @@ func (i *interval) onCompleted(p *eps.Publisher, new, old float64) {
 			cryptoBot.SendMessage(bannerText, "everyone", false)
 		}
 	} else {
-		if conf.Discord.Enabled {
+		if conf.Discord.Enabled && conf.Discord.MessageForEachIntervalUpdate {
 			cryptoBot.SendMessage(bannerText, "", false)
 		}
 	}

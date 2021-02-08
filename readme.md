@@ -82,7 +82,13 @@ Subscribes to the event of a certin price point
 
 Returns the last 24 hour candlestick
 
-## Example
+`!gainers`
+
+Returns the top 10 market gainers from Yahoo Finance
+
+![Example Screenshot](https://i.imgur.com/PCSiT3A.png)
+
+## Logs Example
 
 ![Example Screenshot](https://i.imgur.com/lKS8kzG.png)
 

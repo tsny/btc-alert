@@ -18,9 +18,10 @@ type config struct {
 }
 
 type discordConfig struct {
-	Token     string `json:"token"`
-	Enabled   bool   `json:"enabled"`
-	ChannelID string `json:"channelId"`
+	Token                        string `json:"token"`
+	Enabled                      bool   `json:"enabled"`
+	ChannelID                    string `json:"channelId"`
+	MessageForEachIntervalUpdate bool   `json:"messageOnIntervals"`
 }
 
 var conf config
