@@ -2,28 +2,25 @@ package main
 
 import (
 	"testing"
-
-	"github.com/bwmarrin/discordgo"
 )
 
-// func TestThreshold(t *testing.T) {
-// 	c := threshold{544, 400}
-// 	c.onThresholdReached(true, 300, 499)
-// }
+func Test_GetTopGainers(t *testing.T) {
+	cryptoBot.GetTopGainers()
+}
 
 func TestTTS(t *testing.T) {
 	// cryptoBot.SendMessage("test", "tsny", true)
 	// cryptoBot.ds.ChannelMessageSendTTS(conf.Discord.ChannelID, "test")
 
-	msg := discordgo.MessageSend{
-		Content: "test @everyone",
-		TTS:     true,
-		AllowedMentions: &discordgo.MessageAllowedMentions{
-			Users: []string{"84090395092353024"},
-			Parse: []discordgo.AllowedMentionType{discordgo.AllowedMentionTypeEveryone},
-		},
-	}
-	cryptoBot.ds.ChannelMessageSendComplex(conf.Discord.ChannelID, &msg)
+	// msg := discordgo.MessageSend{
+	// 	Content: "test @everyone",
+	// 	TTS:     true,
+	// 	AllowedMentions: &discordgo.MessageAllowedMentions{
+	// 		Users: []string{"84090395092353024"},
+	// 		Parse: []discordgo.AllowedMentionType{discordgo.AllowedMentionTypeEveryone},
+	// 	},
+	// }
+	// cryptoBot.ds.ChannelMessageSendComplex(conf.Discord.ChannelID, &msg)
 }
 
 // func TestNotification(t *testing.T) {

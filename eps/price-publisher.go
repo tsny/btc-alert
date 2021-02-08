@@ -121,7 +121,8 @@ func (c Candlestick) Volatility() float64 {
 	return (math.Abs(c.High-c.Low) / c.Close) * 100
 }
 
-// Subscribe allows services to subscribe to new BitCoin events
+// Subscribe assigns the func passed in to be called whenever
+// the publisher has fetched and updated the price of the security
 func (p *Publisher) Subscribe(f func(p *Publisher, c Candlestick)) {
 	fmt.Printf("%s Publisher has new subscriber\n", p.Source)
 	p.callbacks = append(p.callbacks, f)
@@ -135,6 +136,10 @@ func (p *Publisher) onPriceUpdated() {
 
 func (p *Publisher) fetchAndUpdatePrice() {
 	newPrice := p.priceFetcher()
+	// Ignore <= 0 since the API probably failed
+	if newPrice <= 0 {
+		return
+	}
 	if p.CurrentCandle == nil {
 		p.CurrentCandle = NewCandlestick(newPrice, p.sleepDuration, p.Source)
 	}

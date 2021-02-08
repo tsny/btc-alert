@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/olekukonko/tablewriter"
 	"github.com/tsny/btc-alert/coinbase"
 	"github.com/tsny/btc-alert/eps"
 	"github.com/tsny/btc-alert/yahoo"
@@ -46,6 +47,21 @@ func (cb *CryptoBot) SubscribeUser(userID string, target float64, p *eps.Publish
 		}
 	}
 	p.Subscribe(f)
+}
+
+// GetTopGainers outputs a table of the top gainers in the market today
+func (cb *CryptoBot) GetTopGainers() {
+	str := &strings.Builder{}
+	data := yahoo.GetTopGainersAsArray()
+	// Have to truncate, too many chars for a message
+	data = data[0:9]
+	table := tablewriter.NewWriter(str)
+	table.SetHeader(yahoo.GetTableHeader())
+	table.AppendBulk(data)
+	table.SetCenterSeparator("|")
+	table.Render()
+	out := "```" + str.String() + "```"
+	cb.SendMessage(out, "", false)
 }
 
 // SendMessage sends a discord message with an optional mention
@@ -119,6 +135,10 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 	if parts[0] == "atall" {
 		cb.SendMessage("test", "everyone", false)
 		return
+	}
+
+	if parts[0] == "gainers" {
+		cb.GetTopGainers()
 	}
 
 	if len(parts) < 2 {
