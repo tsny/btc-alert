@@ -8,9 +8,6 @@ import (
 	"time"
 )
 
-// Source is a type alias for strings
-type Source string
-
 type Ticker struct {
 	TradeID int       `json:"trade_id"`
 	Price   string    `json:"price"`
@@ -31,7 +28,7 @@ type OneDayCandle struct {
 }
 
 // CryptoMap is a map of the Coin's simple name to its ticker
-var CryptoMap = map[string]Source{
+var CryptoMap = map[string]string{
 	"BTC":  "BTC-USD",
 	"BCH":  "BCH-USD",
 	"DASH": "DASH-USD",
@@ -52,9 +49,9 @@ const TickerURL = "https://api.pro.coinbase.com/products/%s/ticker"
 // DailyURL is the Coinbase Ticker API URL that returns the stats for the last 24h
 const DailyURL = "https://api.pro.coinbase.com/products/%s/stats"
 
-// GetPrice retrieves Coinbase's price
-func (s Source) GetPrice() float64 {
-	res, err := http.Get(fmt.Sprintf(TickerURL, s))
+// GetPrice retrieves Coinbase's price for a specific coin
+func GetPrice(ticker string) float64 {
+	res, err := http.Get(fmt.Sprintf(TickerURL, ticker))
 	if err != nil {
 		println(err)
 		return -1
@@ -69,8 +66,9 @@ func (s Source) GetPrice() float64 {
 	return p
 }
 
-func (s Source) Get24Hour() *OneDayCandle {
-	res, err := http.Get(fmt.Sprintf(DailyURL, s))
+// Get24Hour returns a 24 hour candlestick for a ticker
+func Get24Hour(ticker string) *OneDayCandle {
+	res, err := http.Get(fmt.Sprintf(DailyURL, ticker))
 	if err != nil {
 		println(err)
 		return nil

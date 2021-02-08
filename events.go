@@ -46,7 +46,7 @@ func (i *interval) onCompleted(p *eps.Publisher, new, old float64) {
 	changes := sf("Chg: %s | Percent: %.3f%%", utils.Fts(diff), percent)
 
 	bannerText := sf("%s: (%s) %s%d Min | %s | %s",
-		utils.GetTime(), p.Source, prefix, i.occurrences, totalChange, changes)
+		utils.GetTime(), p.Ticker, prefix, i.occurrences, totalChange, changes)
 	utils.Banner(bannerText)
 
 	if math.Abs(percent) > i.PercentThreshold {
@@ -72,7 +72,7 @@ func (t *threshold) onThresholdReached(p *eps.Publisher, breachedUp bool, new, o
 
 	priceMovement := sf("Price Movement: $%v", t.Threshold)
 	str := "%s %s: (%s) %s | %s ($%.2f)"
-	body := sf(str, emoji, utils.GetTime(), p.Source, priceMovement, fpm(t.beginPrice, new), new-t.beginPrice)
+	body := sf(str, emoji, utils.GetTime(), p.Ticker, priceMovement, fpm(t.beginPrice, new), new-t.beginPrice)
 
 	if conf.DesktopNotifications {
 		notif(priceMovement, body, "assets/warning.png")

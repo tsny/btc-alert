@@ -1,7 +1,11 @@
 package yahoo
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
-func Test_scrape(t *testing.T) {
-	scrape()
+func Test_GetTopGainersTickers(t *testing.T) {
+	arr := GetTopGainersTickers()
+	println(strings.Join(arr, " | "))
 }

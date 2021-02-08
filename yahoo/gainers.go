@@ -3,10 +3,16 @@ package yahoo
 import (
 	"log"
 	"net/http"
-	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 )
+
+/*
+	This section of the package deals with querying Yahoo Finance's
+	Chart table for various criteria, mainly top gainers
+	We scrape the URL below and grab HTML elements from it
+	because I cannot find the URL for the API if it still exists
+*/
 
 type Summary struct {
 	Symbol        string
@@ -18,8 +24,8 @@ type Summary struct {
 }
 
 const (
-	url = "https://finance.yahoo.com/gainers/"
-	// allLinksQuery = "a .Fw(600) .C($linkColor)"
+	url           = "https://finance.yahoo.com/gainers/"
+	tickersQuery  = ".Fw(600)"
 	allLinksQuery = "a"
 	allRowsQuery  = "tr"
 )
@@ -50,12 +56,23 @@ func GetTableHeader() []string {
 		"Volume", "Avg Vol(3 Month)", "Market Cap", "PE Ratio"}
 }
 
+// GetTopGainersTickers returns the 25 top daily gainers tickers
+func GetTopGainersTickers() []string {
+	doc := getData()
+	var tickers []string
+	doc.Find(allLinksQuery).Each(func(i int, rows *goquery.Selection) {
+		if rows.HasClass("Fw(600) C($linkColor)") && len(rows.Text()) <= 4 {
+			tickers = append(tickers, rows.Text())
+		}
+	})
+	return tickers
+}
+
+// GetTopGainersAsArray returns the top gainers of the day as a nested array
+// Useful for putting into a table
 func GetTopGainersAsArray() [][]string {
 	doc := getData()
-
 	var arr [][]string
-	// Symbol, Name, Price, Change, % Change, Volume
-	println(strings.Join(GetTableHeader(), " | "))
 	doc.Find(allRowsQuery).Each(func(i int, rows *goquery.Selection) {
 		cells := rows.Find("td")
 		str := ""
@@ -65,7 +82,6 @@ func GetTopGainersAsArray() [][]string {
 			str += " | " + cells.Text()
 		})
 		arr = append(arr, inner)
-		println(str)
 	})
 	return arr
 }

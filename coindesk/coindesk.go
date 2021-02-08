@@ -55,7 +55,7 @@ type Bpi struct {
 }
 
 // GetPrice retrieves Coindesk's price
-func GetPrice() float64 {
+func GetPrice(ticker string) float64 {
 	res, err := http.Get(URL)
 	if err != nil {
 		println(err)

@@ -7,8 +7,6 @@ import (
 	"strconv"
 )
 
-type Source string
-
 const URL = "https://api.binance.com/api/v3/ticker/price?symbol=%s"
 
 type result struct {
@@ -17,8 +15,8 @@ type result struct {
 }
 
 // GetPrice gets the price of the asset in Binance
-func (s Source) GetPrice() float64 {
-	res, err := http.Get(fmt.Sprintf(URL, s))
+func GetPrice(ticker string) float64 {
+	res, err := http.Get(fmt.Sprintf(URL, ticker))
 	if err != nil {
 		println(err)
 		return -1
@@ -35,5 +33,5 @@ func (s Source) GetPrice() float64 {
 }
 
 func DOGE() float64 {
-	return Source("DOGEUSDT").GetPrice()
+	return GetPrice("DOGEUSDT")
 }

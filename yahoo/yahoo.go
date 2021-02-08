@@ -6,8 +6,6 @@ import (
 	"net/http"
 )
 
-type Source string
-
 const (
 	// YahooURL = Yahoo Finance
 	YahooURL = "https://query1.finance.yahoo.com/v7/finance/quote?symbols=%s"
@@ -83,8 +81,8 @@ type QuoteResponse struct {
 }
 
 // GetPrice retrieves Coinbase's price
-func (s Source) GetPrice() float64 {
-	res, err := http.Get(fmt.Sprintf(YahooURL, s))
+func GetPrice(ticker string) float64 {
+	res, err := http.Get(fmt.Sprintf(YahooURL, ticker))
 	if err != nil {
 		println(err)
 		return -1

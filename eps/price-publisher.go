@@ -12,18 +12,19 @@ import (
 // Publisher periodically grabs data from its URL
 // and sends out updates with the price it gets back
 type Publisher struct {
-	Source        string
+	Source        string // Yahoo, Binance, etc
+	Ticker        string
 	callbacks     []func(*Publisher, Candlestick)
 	active        bool
 	sleepDuration int
 	CurrentCandle *Candlestick
-	priceFetcher  func() float64
+	priceFetcher  func(string) float64
 }
 
 // Candlestick represents a 'tick' or duration of a security's price
 // https://en.wikipedia.org/wiki/Candlestick_chart
 type Candlestick struct {
-	Source            string
+	Ticker            string
 	DurationInSeconds int
 	Begin             time.Time
 	Previous          float64
@@ -38,7 +39,7 @@ type Candlestick struct {
 // NewCandlestick is a constructor
 func NewCandlestick(open float64, dur int, source string) *Candlestick {
 	return &Candlestick{
-		Source:            source,
+		Ticker:            source,
 		DurationInSeconds: dur,
 		Open:              open,
 		Begin:             time.Now(),
@@ -76,19 +77,19 @@ func (c Candlestick) String() string {
 	diff := c.Current - c.Previous
 	percent := (diff / c.Current) * 100
 	if c.Previous == 0.00 {
-		return fmt.Sprintf("%s %s: (%s) $%.2f \n", emoji, now, c.Source, c.Current)
+		return fmt.Sprintf("%s %s: (%s) $%.2f \n", emoji, now, c.Ticker, c.Current)
 	}
 	s := "%s %s: (%s) $%.2f | High: $%.2f | Low: $%.2f | Chg: $%.2f | Percent: %.2f%% | Volatility: %.2f%%"
 	if c.Current < 1 {
 		s = "%s %s: (%s) $%.5f | High: $%.5f | Low: $%.5f | Chg: $%.5f | Percent: %.2f%% | Volatility: %.2f%%"
 	}
-	return fmt.Sprintf(s, emoji, now, c.Source, c.Current, c.High, c.Low, diff, percent, c.Volatility())
+	return fmt.Sprintf(s, emoji, now, c.Ticker, c.Current, c.High, c.Low, diff, percent, c.Volatility())
 }
 
 // New is a constructor
-func New(priceFetcher func() float64, source string, start bool, sleepDur int) *Publisher {
+func New(priceFetcher func(string) float64, source string, start bool, sleepDur int) *Publisher {
 	p := &Publisher{
-		Source:        source,
+		Ticker:        source,
 		callbacks:     []func(p *Publisher, c Candlestick){},
 		sleepDuration: sleepDur,
 		priceFetcher:  priceFetcher,
@@ -102,9 +103,9 @@ func New(priceFetcher func() float64, source string, start bool, sleepDur int) *
 // StartProducing loops and updates the price from the chosen exchange
 func (p *Publisher) StartProducing() {
 	p.fetchAndUpdatePrice()
-	fmt.Printf("%s -- Price Publisher active -- Current: %.2f\n", p.Source, p.CurrentCandle.Current)
+	fmt.Printf("%s -- Price Publisher active -- Current: %.2f\n", p.Ticker, p.CurrentCandle.Current)
 	if p.active {
-		fmt.Printf("%s -- Price Event Publisher is ALREADY active\n", p.Source)
+		fmt.Printf("%s -- Price Event Publisher is ALREADY active\n", p.Ticker)
 		return
 	}
 	p.active = true
@@ -124,7 +125,7 @@ func (c Candlestick) Volatility() float64 {
 // Subscribe assigns the func passed in to be called whenever
 // the publisher has fetched and updated the price of the security
 func (p *Publisher) Subscribe(f func(p *Publisher, c Candlestick)) {
-	fmt.Printf("%s Publisher has new subscriber\n", p.Source)
+	fmt.Printf("%s Publisher has new subscriber\n", p.Ticker)
 	p.callbacks = append(p.callbacks, f)
 }
 
@@ -135,17 +136,18 @@ func (p *Publisher) onPriceUpdated() {
 }
 
 func (p *Publisher) fetchAndUpdatePrice() {
-	newPrice := p.priceFetcher()
+	newPrice := p.priceFetcher(p.Ticker)
 	// Ignore <= 0 since the API probably failed
 	if newPrice <= 0 {
+		fmt.Printf("warn: price for %s was <= 0 \n", p.Ticker)
 		return
 	}
 	if p.CurrentCandle == nil {
-		p.CurrentCandle = NewCandlestick(newPrice, p.sleepDuration, p.Source)
+		p.CurrentCandle = NewCandlestick(newPrice, p.sleepDuration, p.Ticker)
 	}
 	candleDone := p.CurrentCandle.Update(newPrice)
 	p.onPriceUpdated()
 	if candleDone {
-		p.CurrentCandle = NewCandlestick(newPrice, p.sleepDuration, p.Source)
+		p.CurrentCandle = NewCandlestick(newPrice, p.sleepDuration, p.Ticker)
 	}
 }
