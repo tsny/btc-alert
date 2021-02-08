@@ -37,9 +37,9 @@ type Candlestick struct {
 }
 
 // NewCandlestick is a constructor
-func NewCandlestick(open float64, dur int, source string) *Candlestick {
+func NewCandlestick(open float64, dur int, ticker string) *Candlestick {
 	return &Candlestick{
-		Ticker:            source,
+		Ticker:            ticker,
 		DurationInSeconds: dur,
 		Open:              open,
 		Begin:             time.Now(),
@@ -87,9 +87,10 @@ func (c Candlestick) String() string {
 }
 
 // New is a constructor
-func New(priceFetcher func(string) float64, source string, start bool, sleepDur int) *Publisher {
+func New(priceFetcher func(string) float64, ticker string, source string, start bool, sleepDur int) *Publisher {
 	p := &Publisher{
-		Ticker:        source,
+		Source:        source,
+		Ticker:        ticker,
 		callbacks:     []func(p *Publisher, c Candlestick){},
 		sleepDuration: sleepDur,
 		priceFetcher:  priceFetcher,

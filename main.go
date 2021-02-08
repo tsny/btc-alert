@@ -15,12 +15,12 @@ func main() {
 	}
 
 	for _, ticker := range coinbase.CryptoMap {
-		pub := eps.New(coinbase.GetPrice, ticker, true, 5)
+		pub := eps.New(coinbase.GetPrice, ticker, "Coinbase", true, 5)
 		_ = newListener(pub, conf.Intervals, conf.Thresholds)
 		PublisherMap[ticker] = pub
 	}
 
-	pub := eps.New(binance.GetPrice, "DOGEUSDT", true, 30)
+	pub := eps.New(binance.GetPrice, "DOGEUSDT", "Binance", true, 30)
 	_ = newListener(pub, conf.Intervals, conf.Thresholds)
 	PublisherMap["DOGE"] = pub
 

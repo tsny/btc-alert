@@ -166,7 +166,7 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 			println("Found existing crypto publisher for " + cryptoTicker)
 		} else {
 			if yahoo.GetPrice(ticker) > 0 {
-				pub = eps.New(yahoo.GetPrice, ticker, true, 5)
+				pub = eps.New(yahoo.GetPrice, ticker, "Yahoo", true, 5)
 				PublisherMap[ticker] = pub
 				println("Made new publisher for subscriber -- " + ticker)
 			} else {
