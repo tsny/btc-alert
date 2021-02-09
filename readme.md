@@ -91,7 +91,7 @@ Returns the last 24 hour candlestick
 
 Returns the top market movers (gainers/losers) from Yahoo Finance
 
-![Movers](https://i.imgur.com/PCSiT3A.png)
+![Movers](https://i.imgur.com/MM9NXqE.png)
 
 `!whois {ticker}`
 
