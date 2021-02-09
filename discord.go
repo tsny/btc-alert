@@ -61,13 +61,19 @@ func (cb *CryptoBot) GetTopGainers(gainers bool) {
 	str := &strings.Builder{}
 	data := yahoo.GetTopMoversAsArray(gainers)
 	// Have to truncate, too many chars for a message
-	data = data[0:9]
+	data = data[0:13]
 	table := tablewriter.NewWriter(str)
 	table.SetHeader(yahoo.GetTableHeader())
 	table.AppendBulk(data)
-	table.SetCenterSeparator("|")
+	table.SetCenterSeparator("")
+	table.SetBorder(false)
+	table.SetHeaderLine(false)
 	table.Render()
 	out := "```" + str.String() + "```"
+	println("size of table " + strconv.Itoa(len(out)))
+	if len(out) > 2000 {
+		return
+	}
 	cb.SendMessage(out, "", false)
 }
 
@@ -154,6 +160,22 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 	}
 
 	if len(parts) < 2 {
+		return
+	}
+
+	if parts[0] == "whois" {
+		t := parts[1]
+		println("Getting summary for " + t)
+		sum := yahoo.GetSummary(t)
+		if sum == "" {
+			println("Couldn't get summary for ticker " + t)
+			return
+		}
+		// Discord don't like mo than 2000 chars
+		if len(sum) > 2000 {
+			sum = sum[0:1999]
+		}
+		cb.SendMessage(sum, "", false)
 		return
 	}
 

@@ -89,9 +89,15 @@ Returns the last 24 hour candlestick
 `!gainers`
 `!losers`
 
-Returns the top 10 market movers (gainers/losers) from Yahoo Finance
+Returns the top market movers (gainers/losers) from Yahoo Finance
 
-![Example Screenshot](https://i.imgur.com/PCSiT3A.png)
+![Movers](https://i.imgur.com/PCSiT3A.png)
+
+`!whois {ticker}`
+
+Returns the company summary from MarketWatch 
+
+![Summary](https://i.imgur.com/YY8wHq2.png)
 
 ## Logs Example
 

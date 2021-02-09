@@ -11,3 +11,7 @@ func Test_GetTopGainersTickers(t *testing.T) {
 	arr = GetTopMoversTickers(false)
 	println(strings.Join(arr, " | "))
 }
+
+func Test_GetSummary(t *testing.T) {
+	println(GetSummary("MSFT"))
+}

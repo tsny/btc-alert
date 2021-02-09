@@ -1,6 +1,7 @@
 package yahoo
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
@@ -26,17 +27,15 @@ type Summary struct {
 const (
 	gainersURL    = "https://finance.yahoo.com/gainers/"
 	losersURL     = "https://finance.yahoo.com/losers/"
+	baseURL       = "https://www.marketwatch.com/investing/stock/%s"
 	tickersQuery  = ".Fw(600)"
 	allLinksQuery = "a"
 	allRowsQuery  = "tr"
+	// summaryQuery  = "p.businessSummary"
+	summaryQuery = ".businessSummary.Mt(10px).Ov(h).Tov(e)"
 )
 
-func getData(gainers bool) *goquery.Document {
-	// Request the HTML page.
-	url := losersURL
-	if gainers {
-		url = gainersURL
-	}
+func getData(url string) *goquery.Document {
 	res, err := http.Get(url)
 	if err != nil {
 		log.Fatal(err)
@@ -55,6 +54,13 @@ func getData(gainers bool) *goquery.Document {
 	return doc
 }
 
+// GetSummary returns the business summary of a ticker from yahoo finance
+func GetSummary(ticker string) string {
+	url := fmt.Sprintf(baseURL, ticker)
+	doc := getData(url)
+	return doc.Find(".description__text").Text()
+}
+
 // GetTableHeader returns a string array structured around the row returned by Yahoo Finance
 func GetTableHeader() []string {
 	return []string{"Symbol", "Name", "Price", "Change", "PercentChange",
@@ -63,7 +69,11 @@ func GetTableHeader() []string {
 
 // GetTopMoversTickers returns the 25 top daily gainers tickers
 func GetTopMoversTickers(gainers bool) []string {
-	doc := getData(gainers)
+	url := losersURL
+	if gainers {
+		url = gainersURL
+	}
+	doc := getData(url)
 	var tickers []string
 	doc.Find(allLinksQuery).Each(func(i int, rows *goquery.Selection) {
 		if rows.HasClass("Fw(600) C($linkColor)") && len(rows.Text()) <= 4 {
@@ -76,7 +86,11 @@ func GetTopMoversTickers(gainers bool) []string {
 // GetTopMoversAsArray returns the top gainers of the day as a nested array
 // Useful for putting into a table
 func GetTopMoversAsArray(gainers bool) [][]string {
-	doc := getData(gainers)
+	url := losersURL
+	if gainers {
+		url = gainersURL
+	}
+	doc := getData(url)
 	var arr [][]string
 	doc.Find(allRowsQuery).Each(func(i int, rows *goquery.Selection) {
 		cells := rows.Find("td")
