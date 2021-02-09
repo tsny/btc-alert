@@ -14,6 +14,8 @@ import (
 	"github.com/tsny/btc-alert/yahoo"
 )
 
+// CryptoBot is a service that communicates with discord and holds onto alerts
+// that are created for discord users
 type CryptoBot struct {
 	ds     *discordgo.Session
 	alerts map[string]priceAlert
@@ -52,6 +54,7 @@ func (cb *CryptoBot) SubscribeUserToPriceTarget(userID string, target float64, p
 	p.Subscribe(f)
 }
 
+// SubscribeToTicker adds a ticker to the general watchlist
 func (cb *CryptoBot) SubscribeToTicker(ticker string, p *eps.Publisher) {
 	_ = newListener(p, conf.Intervals, conf.Thresholds)
 	// PublisherMap[ticker] = p
