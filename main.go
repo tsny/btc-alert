@@ -5,26 +5,53 @@ import (
 	"github.com/tsny/btc-alert/coinbase"
 	"github.com/tsny/btc-alert/eps"
 	"github.com/tsny/btc-alert/utils"
+	"github.com/tsny/btc-alert/yahoo"
 )
 
+// PublisherMap is a WIP system for keeping track of all the
+// EPS publishers for crypto/stockss
 var PublisherMap = map[string]*eps.Publisher{}
+var watchlist = map[string]*eps.Publisher{}
 
 func main() {
 	if conf.DesktopNotifications {
 		notif("BTC-ALERT", "Desktop Notifications Enabled", "")
 	}
 
+	// Crypto
 	for _, ticker := range coinbase.CryptoMap {
-		pub := eps.New(coinbase.GetPrice, ticker, "Coinbase", true, 5)
+		pub := eps.New(coinbase.GetPrice, ticker, "Coinbase", true, 10)
 		_ = newListener(pub, conf.Intervals, conf.Thresholds)
 		PublisherMap[ticker] = pub
 	}
 
+	// Stocks
+	for _, t := range conf.YahooTickers {
+		pub := eps.New(yahoo.GetPrice, t, "Yahoo", true, 30)
+		_ = newListener(pub, conf.Intervals, conf.Thresholds)
+		PublisherMap[t] = pub
+	}
+
+	// Doge
 	pub := eps.New(binance.GetPrice, "DOGEUSDT", "Binance", true, 30)
 	_ = newListener(pub, conf.Intervals, conf.Thresholds)
 	PublisherMap["DOGE"] = pub
 
 	utils.Banner("btc-alert initialized")
+
 	for {
+	}
+}
+
+func refreshWatchlist() {
+	tickers := yahoo.GetTopMoversTickers(true)
+	for _, p := range watchlist {
+		p.SetActive(false)
+	}
+	watchlist = make(map[string]*eps.Publisher)
+	for _, t := range tickers {
+		pub := eps.New(yahoo.GetPrice, t, "Yahoo", true, 30)
+		_ = newListener(pub, conf.Intervals, conf.Thresholds)
+		watchlist[t] = pub
 	}
 }

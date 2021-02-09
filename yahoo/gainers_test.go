@@ -6,6 +6,8 @@ import (
 )
 
 func Test_GetTopGainersTickers(t *testing.T) {
-	arr := GetTopGainersTickers()
+	arr := GetTopMoversTickers(true)
+	println(strings.Join(arr, " | "))
+	arr = GetTopMoversTickers(false)
 	println(strings.Join(arr, " | "))
 }

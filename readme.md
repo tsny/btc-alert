@@ -20,11 +20,15 @@ Config file will look like this:
 {
     "bootNotification": false,
     "discord": {
-        "useDiscord": false,
+        "enabled": false,
         "token": "token.WgvCew.ObvImI8RA0HAn-kf2u8omFQGINI",
         "channelId": "715135158184218",
-        "clearOnBoot": false
     },
+    "yahooTickers":[
+        "MSFT",
+        "GM",
+        "GME"
+    ],
     "thresholds": [
         {
             "threshold": 500
@@ -83,8 +87,9 @@ Subscribes to the event of a certin price point
 Returns the last 24 hour candlestick
 
 `!gainers`
+`!losers`
 
-Returns the top 10 market gainers from Yahoo Finance
+Returns the top 10 market movers (gainers/losers) from Yahoo Finance
 
 ![Example Screenshot](https://i.imgur.com/PCSiT3A.png)
 
@@ -96,5 +101,8 @@ Returns the top 10 market gainers from Yahoo Finance
 
 - github.com/gen2brain/beeep     -  Notifications
 - github.com/bwmarrin/discordgo  -  Discord API
-- Yahoo Finance                  -  BTC Price Data
-- CoindeskAPI                    -  BTC Price Data
+- github.com/PuerkitoBio/goquery - Tables
+
+- Yahoo Finance                  -  Ticker prices
+- CoindeskAPI                    -  Coin Price Data
+- CoinbaseAPI                    -  Coins

@@ -57,9 +57,9 @@ func (cb *CryptoBot) SubscribeToTicker(ticker string, p *eps.Publisher) {
 }
 
 // GetTopGainers outputs a table of the top gainers in the market today
-func (cb *CryptoBot) GetTopGainers() {
+func (cb *CryptoBot) GetTopGainers(gainers bool) {
 	str := &strings.Builder{}
-	data := yahoo.GetTopGainersAsArray()
+	data := yahoo.GetTopMoversAsArray(gainers)
 	// Have to truncate, too many chars for a message
 	data = data[0:9]
 	table := tablewriter.NewWriter(str)
@@ -145,7 +145,12 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 	}
 
 	if parts[0] == "gainers" {
-		cb.GetTopGainers()
+		cb.GetTopGainers(true)
+		return
+	}
+	if parts[0] == "losers" {
+		cb.GetTopGainers(false)
+		return
 	}
 
 	if len(parts) < 2 {

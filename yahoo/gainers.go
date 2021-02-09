@@ -24,14 +24,19 @@ type Summary struct {
 }
 
 const (
-	url           = "https://finance.yahoo.com/gainers/"
+	gainersURL    = "https://finance.yahoo.com/gainers/"
+	losersURL     = "https://finance.yahoo.com/losers/"
 	tickersQuery  = ".Fw(600)"
 	allLinksQuery = "a"
 	allRowsQuery  = "tr"
 )
 
-func getData() *goquery.Document {
+func getData(gainers bool) *goquery.Document {
 	// Request the HTML page.
+	url := losersURL
+	if gainers {
+		url = gainersURL
+	}
 	res, err := http.Get(url)
 	if err != nil {
 		log.Fatal(err)
@@ -56,9 +61,9 @@ func GetTableHeader() []string {
 		"Volume", "Avg Vol(3 Month)", "Market Cap", "PE Ratio"}
 }
 
-// GetTopGainersTickers returns the 25 top daily gainers tickers
-func GetTopGainersTickers() []string {
-	doc := getData()
+// GetTopMoversTickers returns the 25 top daily gainers tickers
+func GetTopMoversTickers(gainers bool) []string {
+	doc := getData(gainers)
 	var tickers []string
 	doc.Find(allLinksQuery).Each(func(i int, rows *goquery.Selection) {
 		if rows.HasClass("Fw(600) C($linkColor)") && len(rows.Text()) <= 4 {
@@ -68,10 +73,10 @@ func GetTopGainersTickers() []string {
 	return tickers
 }
 
-// GetTopGainersAsArray returns the top gainers of the day as a nested array
+// GetTopMoversAsArray returns the top gainers of the day as a nested array
 // Useful for putting into a table
-func GetTopGainersAsArray() [][]string {
-	doc := getData()
+func GetTopMoversAsArray(gainers bool) [][]string {
+	doc := getData(gainers)
 	var arr [][]string
 	doc.Find(allRowsQuery).Each(func(i int, rows *goquery.Selection) {
 		cells := rows.Find("td")

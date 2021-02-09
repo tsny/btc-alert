@@ -94,25 +94,27 @@ func New(priceFetcher func(string) float64, ticker string, source string, start 
 		callbacks:     []func(p *Publisher, c Candlestick){},
 		sleepDuration: sleepDur,
 		priceFetcher:  priceFetcher,
+		active:        start,
 	}
-	if start {
-		p.StartProducing()
-	}
+	p.init()
 	return p
 }
 
+// SetActive sets the publishers state
+// active determines whether it will fetch and produce events
+func (p *Publisher) SetActive(state bool) {
+	p.active = state
+}
+
 // StartProducing loops and updates the price from the chosen exchange
-func (p *Publisher) StartProducing() {
-	p.fetchAndUpdatePrice()
-	fmt.Printf("%s -- Price Publisher active -- Current: %.2f\n", p.Ticker, p.CurrentCandle.Current)
-	if p.active {
-		fmt.Printf("%s -- Price Event Publisher is ALREADY active\n", p.Ticker)
-		return
-	}
-	p.active = true
+func (p *Publisher) init() {
+	curr := p.priceFetcher(p.Ticker)
+	fmt.Printf("%s -- Price Publisher active -- Current: %.2f\n", p.Ticker, curr)
 	go func() {
 		for {
-			p.fetchAndUpdatePrice()
+			if p.active {
+				p.fetchAndUpdatePrice()
+			}
 			time.Sleep(time.Duration(p.sleepDuration) * time.Second)
 		}
 	}()
@@ -140,7 +142,7 @@ func (p *Publisher) fetchAndUpdatePrice() {
 	newPrice := p.priceFetcher(p.Ticker)
 	// Ignore <= 0 since the API probably failed
 	if newPrice <= 0 {
-		fmt.Printf("warn: price for %s was <= 0 \n", p.Ticker)
+		fmt.Printf("warn: price for from %s for  %s was <= 0 \n", p.Source, p.Ticker)
 		return
 	}
 	if p.CurrentCandle == nil {

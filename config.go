@@ -15,6 +15,8 @@ type config struct {
 	BootNotification     bool          `json:"bootNotification"`
 	DesktopNotifications bool          `json:"desktopNotifications"`
 	Discord              discordConfig `json:"discord"`
+	YahooTickers         []string      `json:"yahooTickers"`
+	GainersWatchlist     bool          `json:"gainersWatchlist"`
 }
 
 type discordConfig struct {

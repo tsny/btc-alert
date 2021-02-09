@@ -4,10 +4,6 @@ import (
 	"testing"
 )
 
-func Test_GetTopGainers(t *testing.T) {
-	cryptoBot.GetTopGainers()
-}
-
 func TestTTS(t *testing.T) {
 	// cryptoBot.SendMessage("test", "tsny", true)
 	// cryptoBot.ds.ChannelMessageSendTTS(conf.Discord.ChannelID, "test")
