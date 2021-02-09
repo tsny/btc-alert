@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/tsny/btc-alert/coinbase"
 
@@ -220,7 +221,12 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 	}
 
 	if parts[0] == "get" {
+		// Small delay, todo: get rid
+		if pub.CurrentCandle == nil {
+			time.Sleep(2 * time.Second)
+		}
 		cb.SendMessage(pub.CurrentCandle.String(), "", false)
+		return
 	}
 
 	if parts[0] == "trade" {
