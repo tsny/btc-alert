@@ -30,6 +30,12 @@ func (l *listener) onPriceUpdated(p *eps.Publisher, c eps.Candlestick) {
 	if !c.Complete || c.Current == 0 {
 		return
 	}
+	if p.Streak > conf.StreakAlert && conf.StreakAlert > 0 {
+		if conf.Discord.Enabled {
+			str := fmt.Sprintf("%s has a streak of %v", p.Ticker, p.Streak)
+			cryptoBot.SendMessage(str, "", false)
+		}
+	}
 	go l.checkIntervals(p, c.Current, c.Previous)
 	go l.checkThresholds(p, c.Current, c.Previous)
 

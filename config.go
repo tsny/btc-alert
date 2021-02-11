@@ -17,6 +17,7 @@ type config struct {
 	Discord              discordConfig `json:"discord"`
 	YahooTickers         []string      `json:"yahooTickers"`
 	GainersWatchlist     bool          `json:"gainersWatchlist"`
+	StreakAlert          int           `json:"streakAlert"`
 }
 
 type discordConfig struct {

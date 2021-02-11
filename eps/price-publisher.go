@@ -12,13 +12,15 @@ import (
 // Publisher periodically grabs data from its URL
 // and sends out updates with the price it gets back
 type Publisher struct {
-	Source        string // Yahoo, Binance, etc
-	Ticker        string
-	callbacks     []func(*Publisher, Candlestick)
-	active        bool
-	sleepDuration int
-	CurrentCandle *Candlestick
-	priceFetcher  func(string) float64
+	Source          string // Yahoo, Binance, etc
+	Ticker          string
+	callbacks       []func(*Publisher, Candlestick)
+	streakCallbacks []func(*Publisher, Candlestick, int)
+	active          bool
+	sleepDuration   int
+	CurrentCandle   *Candlestick
+	priceFetcher    func(string) float64
+	Streak          int // How many times in a row the candlestick went up
 }
 
 // Candlestick represents a 'tick' or duration of a security's price
@@ -65,9 +67,9 @@ func (c *Candlestick) Update(price float64) bool {
 	return false
 }
 
-// ClosedAbove is whether or not the Candlestick
+// ClosedAboveOpen is whether or not the Candlestick
 // completed with a price above it's open price
-func (c Candlestick) ClosedAbove() bool {
+func (c Candlestick) ClosedAboveOpen() bool {
 	return c.Close > c.Open
 }
 
@@ -138,6 +140,14 @@ func (p *Publisher) onPriceUpdated() {
 	}
 }
 
+func (p *Publisher) GetPrice() float64 {
+	if p.CurrentCandle == nil {
+		return p.priceFetcher(p.Ticker)
+	} else {
+		return p.CurrentCandle.Current
+	}
+}
+
 func (p *Publisher) fetchAndUpdatePrice() {
 	newPrice := p.priceFetcher(p.Ticker)
 	// Ignore <= 0 since the API probably failed
@@ -151,6 +161,11 @@ func (p *Publisher) fetchAndUpdatePrice() {
 	candleDone := p.CurrentCandle.Update(newPrice)
 	p.onPriceUpdated()
 	if candleDone {
+		if p.CurrentCandle.ClosedAboveOpen() {
+			p.Streak++
+		} else {
+			p.Streak = 0
+		}
 		p.CurrentCandle = NewCandlestick(newPrice, p.sleepDuration, p.Ticker)
 	}
 }

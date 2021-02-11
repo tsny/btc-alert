@@ -35,9 +35,10 @@ var cryptoBot *CryptoBot
 // SubscribeUserToPriceTarget alerts a user when a security hits a specific price target
 // relative to the price the security was at when the user first subscribed
 func (cb *CryptoBot) SubscribeUserToPriceTarget(userID string, target float64, p *eps.Publisher) {
-	startedBelow := p.CurrentCandle.Current < target
+	startedBelow := p.GetPrice() < target
 	x := priceAlert{userID, p, target, p.CurrentCandle.Current, true, startedBelow}
-	fmt.Printf("Subscribing %s to %s price point %.4f\n", userID, p.Ticker, target)
+	str := "Subbing %s to %s price point %.4f | Current: %.4f\n"
+	fmt.Printf(str, userID, p.Ticker, target, p.GetPrice())
 	f := func(p *eps.Publisher, candle eps.Candlestick) {
 		if !x.active {
 			return
@@ -65,7 +66,7 @@ func (cb *CryptoBot) GetTopGainers(gainers bool) {
 	str := &strings.Builder{}
 	data := yahoo.GetTopMoversAsArray(gainers)
 	// Have to truncate, too many chars for a message
-	data = data[0:13]
+	data = data[0:11]
 	table := tablewriter.NewWriter(str)
 	table.SetHeader(yahoo.GetTableHeader())
 	table.AppendBulk(data)
@@ -210,6 +211,7 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 	if parts[0] == "sub" {
 		if len(parts) < 3 {
 			cb.SubscribeToTicker(ticker, pub)
+			cb.SendMessage("Following "+ticker, "", false)
 			return
 		}
 
