@@ -48,18 +48,19 @@ func (i *interval) onCompleted(p *eps.Publisher, new, old float64) {
 	bannerText := sf("%s: (%s) %s%d Min | %s | %s",
 		utils.GetTime(), p.Ticker, prefix, i.occurrences, totalChange, changes)
 	utils.Banner(bannerText)
+	alert := sf("(%s) %s%d Min | %s | %s", p.Ticker, prefix, i.occurrences, totalChange, changes)
 
 	if math.Abs(percent) > i.PercentThreshold {
 		if conf.DesktopNotifications {
 			hdr := sf("Last %d Min | %.2f%%", i.MaxOccurences, i.PercentThreshold)
-			notif(hdr, bannerText, "assets/warning.png")
+			notif(hdr, alert, "assets/warning.png")
 		}
 		if conf.Discord.Enabled {
-			cryptoBot.SendMessage(bannerText, "everyone", false)
+			cryptoBot.SendMessage(alert, "everyone", false)
 		}
 	} else {
 		if conf.Discord.Enabled && conf.Discord.MessageForEachIntervalUpdate {
-			cryptoBot.SendMessage(bannerText, "", false)
+			cryptoBot.SendMessage(alert, "", false)
 		}
 	}
 }
