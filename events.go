@@ -48,7 +48,7 @@ func (i *interval) onCompleted(p *eps.Publisher, new, old float64) {
 	bannerText := sf("%s: (%s) %s%d Min | %s | %s",
 		utils.GetTime(), p.Ticker, prefix, i.occurrences, totalChange, changes)
 	utils.Banner(bannerText)
-	alert := sf("(%s) %s%d Min | %s | %s", p.Ticker, prefix, i.occurrences, totalChange, changes)
+	alert := sf("(%s) %d Min | %s | %s", p.Ticker, i.occurrences, totalChange, changes)
 
 	if math.Abs(percent) > i.PercentThreshold {
 		if conf.DesktopNotifications {
