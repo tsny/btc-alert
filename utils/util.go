@@ -7,9 +7,9 @@ import (
 )
 
 const (
-	Up              = "🟩"
-	Down            = "🟥"
-	Neutral         = "🟦"
+	Up              = "↑"
+	Down            = "↓"
+	Neutral         = ""
 	dollar          = "💲"
 	TimestampFormat = "03:04 PM"
 )
