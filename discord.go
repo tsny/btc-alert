@@ -66,7 +66,7 @@ func (cb *CryptoBot) GetTopGainers(gainers bool) {
 	str := &strings.Builder{}
 	data := yahoo.GetTopMoversAsArray(gainers)
 	// Have to truncate, too many chars for a message
-	data = data[0:11]
+	data = data[0:10]
 	table := tablewriter.NewWriter(str)
 	table.SetHeader(yahoo.GetTableHeader())
 	table.AppendBulk(data)
@@ -220,8 +220,8 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 			return
 		}
 		cb.SubscribeUserToPriceTarget(m.Author.ID, price, pub)
-		str := "Subscribing %s to %s price point %.4f"
-		discordMessage := fmt.Sprintf(str, m.Author.Username, pub.Ticker, price)
+		str := "Subbed %s to %s price point %.4f -- Current: %.4f"
+		discordMessage := fmt.Sprintf(str, m.Author.Username, pub.Ticker, price, pub.GetPrice())
 		cb.SendMessage(discordMessage, "", false)
 	}
 
@@ -237,13 +237,15 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 	if parts[0] == "trade" {
 		cdl := pub.CurrentCandle
 		fee := cdl.Current * .01
-		str := fmt.Sprintf("%s -- $%.2f -- Fee: $%.2f -- 2%% Gain: $%.2f", cdl.Ticker, cdl.Current, fee, fee*2)
+		str := "%s -- $%.2f -- Fee: $%.2f -- 2%% Gain: $%.2f"
+		str = fmt.Sprintf(str, cdl.Ticker, cdl.Current, fee, fee*2)
 		cb.SendMessage(str, "", false)
 	}
 
 	if parts[0] == "stat" {
 		d := coinbase.Get24Hour(ticker)
-		str := fmt.Sprintf("24 Hour Status: %s -- High: $%s | Low: $%s | Open $%s", ticker, d.High, d.Low, d.Open)
+		str := "24 Hour Status: %s -- High: $%s | Low: $%s | Open $%"
+		str = fmt.Sprintf(str, ticker, d.High, d.Low, d.Open)
 		cb.SendMessage(str, "", false)
 	}
 }
