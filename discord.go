@@ -238,7 +238,7 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 		cdl := pub.CurrentCandle
 		fee := cdl.Current * .01
 		str := "%s -- $%.2f -- Fee: $%.2f -- 2%% Gain: $%.2f ($%.2f)"
-		str = fmt.Sprintf(str, cdl.Ticker, cdl.Current, fee, fee*2, fee*2 + cdl.Ticker)
+		str = fmt.Sprintf(str, cdl.Ticker, cdl.Current, fee, fee*2, fee*2+cdl.Current)
 		cb.SendMessage(str, "", false)
 	}
 

@@ -3,10 +3,8 @@ package main
 import (
 	"fmt"
 	"math"
-	"strings"
 	"time"
 
-	"github.com/gen2brain/beeep"
 	"github.com/tsny/btc-alert/eps"
 	"github.com/tsny/btc-alert/utils"
 )
@@ -52,8 +50,8 @@ func (i *interval) onCompleted(p *eps.Publisher, new, old float64) {
 
 	if math.Abs(percent) > i.PercentThreshold {
 		if conf.DesktopNotifications {
-			hdr := sf("Last %d Min | %.2f%%", i.MaxOccurences, i.PercentThreshold)
-			notif(hdr, alert, "assets/warning.png")
+			// hdr := sf("Last %d Min | %.2f%%", i.MaxOccurences, i.PercentThreshold)
+			// notif(hdr, alert, "assets/warning.png")
 		}
 		if conf.Discord.Enabled {
 			cryptoBot.SendMessage(alert, "everyone", false)
@@ -76,7 +74,7 @@ func (t *threshold) onThresholdReached(p *eps.Publisher, breachedUp bool, new, o
 	body := sf(str, emoji, utils.GetTime(), p.Ticker, priceMovement, fpm(t.beginPrice, new), new-t.beginPrice)
 
 	if conf.DesktopNotifications {
-		notif(priceMovement, body, "assets/warning.png")
+		// notif(priceMovement, body, "assets/warning.png")
 	}
 	utils.Banner("ALERT " + body)
 
@@ -95,14 +93,4 @@ func (i *interval) reset(new float64) {
 	i.occurrences = 0
 	i.startTime = time.Now()
 	i.beginPrice = new
-}
-
-// notif is a beeep.Alert() wrapper
-// it ensures there are no '$'
-// since this can mess with powershell notifications
-func notif(hdr, body, img string) {
-	hdr = strings.ReplaceAll(hdr, "$", "💲")
-	body = strings.ReplaceAll(body, "$", "💲")
-	body = strings.ReplaceAll(body, "|", "\n")
-	beeep.Alert(hdr, body, img)
 }

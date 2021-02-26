@@ -29,6 +29,7 @@ type Candlestick struct {
 	Ticker            string
 	DurationInSeconds int
 	Begin             time.Time
+	LastUpdate        time.Time
 	Previous          float64
 	Current           float64
 	Close             float64
@@ -52,6 +53,7 @@ func NewCandlestick(open float64, dur int, ticker string) *Candlestick {
 // and returns whether or not the candlestick has completed
 func (c *Candlestick) Update(price float64) bool {
 	c.Previous = c.Current
+	c.LastUpdate = time.Now()
 	c.Current = price
 	if price < c.Low || c.Low == 0 {
 		c.Low = price

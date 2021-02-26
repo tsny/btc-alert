@@ -1,6 +1,10 @@
 package main
 
 import (
+	"log"
+	"net/http"
+	"os"
+
 	"github.com/tsny/btc-alert/binance"
 	"github.com/tsny/btc-alert/coinbase"
 	"github.com/tsny/btc-alert/eps"
@@ -15,7 +19,7 @@ var watchlist = map[string]*eps.Publisher{}
 
 func main() {
 	if conf.DesktopNotifications {
-		notif("BTC-ALERT", "Desktop Notifications Enabled", "")
+		// notif("BTC-ALERT", "Desktop Notifications Enabled", "")
 	}
 
 	// Crypto
@@ -39,6 +43,14 @@ func main() {
 
 	utils.Banner("btc-alert initialized")
 
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+		log.Printf("Defaulting to port %s", port)
+	}
+
+	log.Printf("Listening on port %s", port)
+	go http.ListenAndServe(":"+port, initRoutes())
 	for {
 	}
 }

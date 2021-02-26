@@ -18,3 +18,5 @@ finance
 btc-alert
 config.json
 coinbase.secret
+.gcloudignore
+app.yaml
