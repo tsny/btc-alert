@@ -11,7 +11,7 @@ const (
 	YahooURL = "https://query1.finance.yahoo.com/v7/finance/quote?symbols=%s"
 )
 
-// Top level result
+// TLR is the Top level json result
 type TLR struct {
 	QuoteResponse QuoteResponse `json:"quoteResponse"`
 }
@@ -75,17 +75,18 @@ type Result struct {
 	Symbol                            string  `json:"symbol"`
 }
 
+// QuoteResponse is the top level json element from Yahoo Finance API
 type QuoteResponse struct {
 	Result []Result    `json:"result"`
 	Error  interface{} `json:"error"`
 }
 
-// GetPrice retrieves Coinbase's price
-func GetPrice(ticker string) float64 {
+// GetDetails returns the base summary of a ticker from Yahoo Finance API
+func GetDetails(ticker string) *Result {
 	res, err := http.Get(fmt.Sprintf(YahooURL, ticker))
 	if err != nil {
 		println(err)
-		return -1
+		return nil
 	}
 	var out TLR
 	d := json.NewDecoder(res.Body)
@@ -94,7 +95,16 @@ func GetPrice(ticker string) float64 {
 		if err != nil {
 			println(err)
 		}
+		return nil
+	}
+	return &out.QuoteResponse.Result[0]
+}
+
+// GetPrice retrieves the current trading price of a ticker from Yahoo
+func GetPrice(ticker string) float64 {
+	det := GetDetails(ticker)
+	if det == nil {
 		return -1
 	}
-	return out.QuoteResponse.Result[0].RegularMarketPrice
+	return det.RegularMarketPrice
 }

@@ -24,6 +24,6 @@ func getSymbol(w http.ResponseWriter, r *http.Request) {
 	if pub, ok := PublisherMap[symbol]; ok {
 		json.NewEncoder(w).Encode(pub)
 	} else {
-		json.NewEncoder(w).Encode(yahoo.GetPrice(symbol))
+		json.NewEncoder(w).Encode(yahoo.GetDetails(symbol))
 	}
 }
