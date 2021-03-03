@@ -14,13 +14,13 @@ import (
 type Publisher struct {
 	Source          string // Yahoo, Binance, etc
 	Ticker          string
+	CurrentCandle   *Candlestick
+	Streak          int // How many times in a row the candlestick went up
 	callbacks       []func(*Publisher, Candlestick)
 	streakCallbacks []func(*Publisher, Candlestick, int)
 	active          bool
 	sleepDuration   int
-	CurrentCandle   *Candlestick
 	priceFetcher    func(string) float64
-	Streak          int // How many times in a row the candlestick went up
 }
 
 // Candlestick represents a 'tick' or duration of a security's price
@@ -76,18 +76,17 @@ func (c Candlestick) ClosedAboveOpen() bool {
 }
 
 func (c Candlestick) String() string {
-	now := utils.GetTime()
 	emoji := utils.GetEmoji(c.Current, c.Previous)
 	diff := c.Current - c.Previous
 	percent := (diff / c.Current) * 100
 	if c.Previous == 0.00 {
-		return fmt.Sprintf("%s %s: (%s) $%.2f \n", emoji, now, c.Ticker, c.Current)
+		return fmt.Sprintf("%s: (%s) $%.2f \n", emoji, c.Ticker, c.Current)
 	}
 	s := "%s %s: (%s) $%.2f | High: $%.2f | Low: $%.2f | Chg: $%.2f | Percent: %.2f%% | Volatility: %.2f%%"
 	if c.Current < 1 {
-		s = "%s %s: (%s) $%.5f | High: $%.5f | Low: $%.5f | Chg: $%.5f | Percent: %.2f%% | Volatility: %.2f%%"
+		s = "%s: (%s) $%.5f | High: $%.5f | Low: $%.5f | Chg: $%.5f | Percent: %.2f%% | Volatility: %.2f%%"
 	}
-	return fmt.Sprintf(s, emoji, now, c.Ticker, c.Current, c.High, c.Low, diff, percent, c.Volatility())
+	return fmt.Sprintf(s, emoji, c.Ticker, c.Current, c.High, c.Low, diff, percent, c.Volatility())
 }
 
 // New is a constructor
@@ -138,16 +137,16 @@ func (p *Publisher) Subscribe(f func(p *Publisher, c Candlestick)) {
 
 func (p *Publisher) onPriceUpdated() {
 	for _, c := range p.callbacks {
-		c(p, *p.CurrentCandle)
+		go c(p, *p.CurrentCandle)
 	}
 }
 
+// GetPrice returns the current price of the configured ticker
 func (p *Publisher) GetPrice() float64 {
 	if p.CurrentCandle == nil {
 		return p.priceFetcher(p.Ticker)
-	} else {
-		return p.CurrentCandle.Current
 	}
+	return p.CurrentCandle.Current
 }
 
 func (p *Publisher) fetchAndUpdatePrice() {

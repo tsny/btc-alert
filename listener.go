@@ -45,10 +45,6 @@ func (l *listener) onPriceUpdated(p *eps.Publisher, c eps.Candlestick) {
 		s = s + " <-- ALERT"
 	}
 	fmt.Println(s)
-
-	// if conf.Discord.Enabled {
-	// 	discordMessage(getSummaryNew(p, new, old), false)
-	// }
 }
 
 func (l *listener) checkIntervals(p *eps.Publisher, new, old float64) {
