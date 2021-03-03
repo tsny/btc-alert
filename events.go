@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"math"
 	"time"
 
@@ -43,9 +44,10 @@ func (i *interval) onCompleted(p *eps.Publisher, new, old float64) {
 	totalChange := sf("%s --> %s", utils.Fts(i.beginPrice), utils.Fts(new))
 	changes := sf("Chg: %s | Percent: %.3f%%", utils.Fts(diff), percent)
 
-	bannerText := sf("%s: (%s) %s%d Min | %s | %s",
-		utils.GetTime(), p.Ticker, prefix, i.occurrences, totalChange, changes)
-	utils.Banner(bannerText)
+	str := "%s: (%s) %s%d Min | %s | %s"
+	bannerText := sf(str, utils.GetTime(), p.Ticker, prefix, i.occurrences, totalChange, changes)
+	log.Print(bannerText)
+
 	alert := sf("(%s) %d Min | %s | %s", p.Ticker, i.occurrences, totalChange, changes)
 
 	if math.Abs(percent) > i.PercentThreshold {

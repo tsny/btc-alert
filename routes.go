@@ -15,6 +15,7 @@ func initRoutes() *mux.Router {
 	r.HandleFunc("/topMovers", getTopMovers).Methods("GET")
 	r.HandleFunc("/watchlist", getWatchlist).Methods("GET")
 	r.HandleFunc("/watchlist", postRefreshWatchlist).Methods("POST")
+	r.HandleFunc("/crypto", getCryptoWatchlist).Methods("GET")
 	return r
 }
 
@@ -37,6 +38,17 @@ func getWatchlist(w http.ResponseWriter, r *http.Request) {
 		publishers = append(publishers, p)
 	}
 	sendJSON(w, publishers)
+}
+
+func getCryptoWatchlist(w http.ResponseWriter, r *http.Request) {
+	var cr []*eps.Publisher
+	for _, p := range PublisherMap {
+		if p.UseMarketHours {
+			continue
+		}
+		cr = append(cr, p)
+	}
+	sendJSON(w, cr)
 }
 
 func postRefreshWatchlist(w http.ResponseWriter, r *http.Request) {

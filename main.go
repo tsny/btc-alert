@@ -32,6 +32,7 @@ func main() {
 	// Stocks
 	for _, t := range conf.YahooTickers {
 		pub := eps.New(yahoo.GetPrice, t, "Yahoo", true, 30)
+		pub.UseMarketHours = true
 		_ = newListener(pub, conf.Intervals, conf.Thresholds)
 		PublisherMap[t] = pub
 	}
@@ -63,6 +64,7 @@ func refreshWatchlist() {
 	watchlist = make(map[string]*eps.Publisher)
 	for _, t := range tickers {
 		pub := eps.New(yahoo.GetPrice, t, "Yahoo", true, 30)
+		pub.UseMarketHours = true
 		_ = newListener(pub, conf.Intervals, conf.Thresholds)
 		watchlist[t] = pub
 	}

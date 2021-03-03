@@ -3,6 +3,7 @@ package eps
 
 import (
 	"fmt"
+	"log"
 	"math"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 // and sends out updates with the price it gets back
 type Publisher struct {
 	Source          string // Yahoo, Binance, etc
+	UseMarketHours  bool   // whether the security abides by market hours
 	Ticker          string
 	CurrentCandle   *Candlestick
 	Streak          int // How many times in a row the candlestick went up
@@ -82,9 +84,9 @@ func (c Candlestick) String() string {
 	if c.Previous == 0.00 {
 		return fmt.Sprintf("%s: (%s) $%.2f \n", emoji, c.Ticker, c.Current)
 	}
-	s := "%s %s: (%s) $%.2f | High: $%.2f | Low: $%.2f | Chg: $%.2f | Percent: %.2f%% | Volatility: %.2f%%"
+	s := "%s (%s) $%.2f | High: $%.2f | Low: $%.2f | Chg: $%.2f | Percent: %.2f%% | Volatility: %.2f%%"
 	if c.Current < 1 {
-		s = "%s: (%s) $%.5f | High: $%.5f | Low: $%.5f | Chg: $%.5f | Percent: %.2f%% | Volatility: %.2f%%"
+		s = "%s (%s) $%.5f | High: $%.5f | Low: $%.5f | Chg: $%.5f | Percent: %.2f%% | Volatility: %.2f%%"
 	}
 	return fmt.Sprintf(s, emoji, c.Ticker, c.Current, c.High, c.Low, diff, percent, c.Volatility())
 }
@@ -112,15 +114,29 @@ func (p *Publisher) SetActive(state bool) {
 // StartProducing loops and updates the price from the chosen exchange
 func (p *Publisher) init() {
 	curr := p.priceFetcher(p.Ticker)
-	fmt.Printf("%s -- Price Publisher active -- Current: %.2f\n", p.Ticker, curr)
+	log.Printf("%s -- Price Publisher active -- Current: %.2f\n", p.Ticker, curr)
 	go func() {
 		for {
+			// Disable self if past market hours
+			if p.UseMarketHours && !isMarketHours() && p.active {
+				log.Printf("%s disabled as it is not market hours", p.Ticker)
+				p.active = false
+			}
 			if p.active {
 				p.fetchAndUpdatePrice()
 			}
 			time.Sleep(time.Duration(p.sleepDuration) * time.Second)
 		}
 	}()
+}
+
+// Regular US stock market trading hours are 9:30 AM -> 4 PM
+func isMarketHours() bool {
+	nyse, _ := time.LoadLocation("America/New_York")
+	now := time.Now().In(nyse)
+	hour := now.Hour()
+	min := now.Minute()
+	return hour < 16 && (hour > 8 && min >= 30)
 }
 
 // Volatility returns the percent difference between the high/low and close
@@ -131,7 +147,7 @@ func (c Candlestick) Volatility() float64 {
 // Subscribe assigns the func passed in to be called whenever
 // the publisher has fetched and updated the price of the security
 func (p *Publisher) Subscribe(f func(p *Publisher, c Candlestick)) {
-	fmt.Printf("%s Publisher has new subscriber\n", p.Ticker)
+	log.Printf("%s Publisher has new subscriber\n", p.Ticker)
 	p.callbacks = append(p.callbacks, f)
 }
 
