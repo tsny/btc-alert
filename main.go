@@ -1,6 +1,7 @@
 package main
 
 import (
+	"btc-alert/priceTracking"
 	"log"
 	"net/http"
 	"os"
@@ -21,6 +22,9 @@ func main() {
 	if conf.DesktopNotifications {
 		// notif("BTC-ALERT", "Desktop Notifications Enabled", "")
 	}
+	queueService := priceTracking.NewQueueService()
+	// test := eps.Publisher{}
+	queueService.Test(12, 13)
 
 	// Crypto
 	for _, ticker := range coinbase.CryptoMap {

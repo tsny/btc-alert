@@ -25,6 +25,7 @@ type discordConfig struct {
 	Enabled                      bool   `json:"enabled"`
 	ChannelID                    string `json:"channelId"`
 	MessageForEachIntervalUpdate bool   `json:"messageOnIntervals"`
+	AlertEveryone                bool   `json:"alertEveryone"` // Whether to tag @everyone when an alert is sent
 }
 
 var conf config

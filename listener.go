@@ -2,11 +2,15 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"time"
 
 	"github.com/tsny/btc-alert/eps"
 )
 
 type listener struct {
+	publisher  *eps.Publisher
+	lastAlert  time.Time
 	intervals  []interval
 	thresholds []threshold
 }
@@ -23,6 +27,7 @@ func newListener(p *eps.Publisher, intervals []interval, thresholds []threshold)
 		l.thresholds = append(l.thresholds, t)
 	}
 	p.Subscribe(l.onPriceUpdated)
+	l.publisher = p
 	return &l
 }
 
@@ -44,7 +49,7 @@ func (l *listener) onPriceUpdated(p *eps.Publisher, c eps.Candlestick) {
 		cryptoBot.SendMessage(s, "everyone", false)
 		s = s + " <-- ALERT"
 	}
-	fmt.Println(s)
+	log.Print(s)
 }
 
 func (l *listener) checkIntervals(p *eps.Publisher, new, old float64) {

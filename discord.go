@@ -2,10 +2,12 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/tsny/btc-alert/coinbase"
 
 	"github.com/bwmarrin/discordgo"
@@ -17,8 +19,9 @@ import (
 // CryptoBot is a service that communicates with discord and holds onto alerts
 // that are created for discord users
 type CryptoBot struct {
-	ds     *discordgo.Session
-	alerts map[string]priceAlert
+	ds        *discordgo.Session
+	alerts    map[string]priceAlert
+	channelId string
 }
 
 type priceAlert struct {
@@ -31,6 +34,28 @@ type priceAlert struct {
 }
 
 var cryptoBot *CryptoBot
+
+// todo: pass in the channel id, don't ref config all the time?
+// todo: return err
+func initBot(token string) *CryptoBot {
+	dg, err := discordgo.New("Bot " + token)
+	if err != nil {
+		fmt.Println("error creating Discord session,", err)
+		return nil
+	}
+	dg.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsGuildMessages)
+	err = dg.Open()
+	if err != nil {
+		fmt.Println("error opening connection,", err)
+		return nil
+	}
+
+	println("Connected to Discord server")
+	cb := &CryptoBot{ds: dg, channelId: conf.Discord.ChannelID}
+	dg.AddHandler(cb.OnNewMessage)
+	dg.AddHandler(cb.OnDisconnect)
+	return cb
+}
 
 // SubscribeUserToPriceTarget alerts a user when a security hits a specific price target
 // relative to the price the security was at when the user first subscribed
@@ -83,11 +108,10 @@ func (cb *CryptoBot) GetTopGainers(gainers bool) {
 }
 
 // SendMessage sends a discord message with an optional mention
-func (cb *CryptoBot) SendMessage(str string, userID string, tts bool) {
-
+// TODO: Could change these into options for UserID and TTS
+func (cb *CryptoBot) SendMessage(str string, userID string, tts bool) (*discordgo.Message, error) {
 	if userID == "" {
-		cb.ds.ChannelMessageSend(conf.Discord.ChannelID, str)
-		return
+		return cb.ds.ChannelMessageSend(conf.Discord.ChannelID, str)
 	}
 
 	mention := userID
@@ -106,28 +130,18 @@ func (cb *CryptoBot) SendMessage(str string, userID string, tts bool) {
 			Parse: []discordgo.AllowedMentionType{discordgo.AllowedMentionTypeEveryone},
 		},
 	}
-	_, err := cb.ds.ChannelMessageSendComplex(conf.Discord.ChannelID, &msg)
-	if err != nil {
-		println(err.Error())
-	}
+	return cb.ds.ChannelMessageSendComplex(conf.Discord.ChannelID, &msg)
 }
 
-func initBot(token string) *CryptoBot {
-	dg, err := discordgo.New("Bot " + token)
-	if err != nil {
-		fmt.Println("error creating Discord session,", err)
-		return nil
-	}
-	dg.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsGuildMessages)
-	err = dg.Open()
-	if err != nil {
-		fmt.Println("error opening connection,", err)
-		return nil
-	}
-	println("Connected to Discord server")
-	b := &CryptoBot{ds: dg}
-	dg.AddHandler(b.OnNewMessage)
-	return b
+// OnDisconnect logs whenever we disconnect (for debugging)
+func (cb *CryptoBot) OnDisconnect(s *discordgo.Session, hb *discordgo.Disconnect) {
+	logrus.Infof("Bot disconnected")
+}
+
+func (cb *CryptoBot) SendGraph(content string, reader io.Reader) {
+	file := &discordgo.File{Name: "test.png", Reader: reader}
+	msg := &discordgo.MessageSend{Content: content, Files: []*discordgo.File{file}}
+	cb.ds.ChannelMessageSendComplex(cb.channelId, msg)
 }
 
 // OnNewMessage function will be called (due to AddHandler above) every time a new
@@ -137,6 +151,7 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 	if m.Author.ID == s.State.User.ID {
 		return
 	}
+	logrus.Infof("Processing msg '%s' from '%s'", m.Content, m.Author.Username)
 
 	msg := strings.TrimSpace(m.Content)
 	if msg[0] != '!' {

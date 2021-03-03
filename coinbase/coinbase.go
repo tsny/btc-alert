@@ -49,17 +49,26 @@ const TickerURL = "https://api.pro.coinbase.com/products/%s/ticker"
 // DailyURL is the Coinbase Ticker API URL that returns the stats for the last 24h
 const DailyURL = "https://api.pro.coinbase.com/products/%s/stats"
 
-// GetPrice retrieves Coinbase's price for a specific coin
-func GetPrice(ticker string) float64 {
+// GetDetails retrieves details regarding a specific coin
+func GetDetails(ticker string) *Ticker {
 	res, err := http.Get(fmt.Sprintf(TickerURL, ticker))
 	if err != nil {
 		println(err)
-		return -1
+		return nil
 	}
 	var out Ticker
 	d := json.NewDecoder(res.Body)
 	d.Decode(&out)
 	if err != nil {
+		return nil
+	}
+	return &out
+}
+
+// GetPrice retrieves Coinbase's price for a specific coin
+func GetPrice(ticker string) float64 {
+	out := GetDetails(ticker)
+	if out == nil {
 		return -1
 	}
 	p, _ := strconv.ParseFloat(out.Price, 2)

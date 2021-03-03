@@ -14,11 +14,12 @@ import (
 // and sends out updates with the price it gets back
 type Publisher struct {
 	Source          string // Yahoo, Binance, etc
-	UseMarketHours  bool   // whether the security abides by market hours
+	UseMarketHours  bool   // whether the security abides by exchange market hours (NYSE, etc)
 	Ticker          string
 	CurrentCandle   *Candlestick
-	Streak          int // How many times in a row the candlestick went up
-	callbacks       []func(*Publisher, Candlestick)
+	Streak          int                             // How many times in a row the candlestick went up
+	callbacks       []func(*Publisher, Candlestick) // callbacks upon price update
+	closedCallbacks []func(*Publisher, Candlestick) // callbacks upon candlestick closed
 	streakCallbacks []func(*Publisher, Candlestick, int)
 	active          bool
 	sleepDuration   int
@@ -29,6 +30,7 @@ type Publisher struct {
 // https://en.wikipedia.org/wiki/Candlestick_chart
 type Candlestick struct {
 	Ticker            string
+	Source            string
 	DurationInSeconds int
 	Begin             time.Time
 	LastUpdate        time.Time
@@ -42,7 +44,7 @@ type Candlestick struct {
 }
 
 // NewCandlestick is a constructor
-func NewCandlestick(open float64, dur int, ticker string) *Candlestick {
+func NewCandlestick(open float64, dur int, ticker, source string) *Candlestick {
 	return &Candlestick{
 		Ticker:            ticker,
 		DurationInSeconds: dur,
@@ -77,6 +79,12 @@ func (c Candlestick) ClosedAboveOpen() bool {
 	return c.Close > c.Open
 }
 
+// OpenCloseDiff returns the absolute difference between the candle's
+// close and open
+func (c Candlestick) OpenCloseDiff() float64 {
+	return math.Abs(c.Close - c.Open)
+}
+
 func (c Candlestick) String() string {
 	emoji := utils.GetEmoji(c.Current, c.Previous)
 	diff := c.Current - c.Previous
@@ -84,9 +92,9 @@ func (c Candlestick) String() string {
 	if c.Previous == 0.00 {
 		return fmt.Sprintf("%s: (%s) $%.2f \n", emoji, c.Ticker, c.Current)
 	}
-	s := "%s (%s) $%.2f | High: $%.2f | Low: $%.2f | Chg: $%.2f | Percent: %.2f%% | Volatility: %.2f%%"
+	s := "%s (%s) $%.2f | High: $%.2f | Low: $%.2f | Chg: $%.2f | Percent: %.2f%% | Vol: %.2f%%"
 	if c.Current < 1 {
-		s = "%s (%s) $%.5f | High: $%.5f | Low: $%.5f | Chg: $%.5f | Percent: %.2f%% | Volatility: %.2f%%"
+		s = "%s (%s) $%.5f | High: $%.5f | Low: $%.5f | Chg: $%.5f | Percent: %.2f%% | Vol: %.2f%%"
 	}
 	return fmt.Sprintf(s, emoji, c.Ticker, c.Current, c.High, c.Low, diff, percent, c.Volatility())
 }
@@ -146,6 +154,7 @@ func (c Candlestick) Volatility() float64 {
 
 // Subscribe assigns the func passed in to be called whenever
 // the publisher has fetched and updated the price of the security
+// todo: maybe this should take in an interface rather than just a func
 func (p *Publisher) Subscribe(f func(p *Publisher, c Candlestick)) {
 	log.Printf("%s Publisher has new subscriber\n", p.Ticker)
 	p.callbacks = append(p.callbacks, f)
@@ -154,6 +163,11 @@ func (p *Publisher) Subscribe(f func(p *Publisher, c Candlestick)) {
 func (p *Publisher) onPriceUpdated() {
 	for _, c := range p.callbacks {
 		go c(p, *p.CurrentCandle)
+	}
+	if p.CurrentCandle.Complete {
+		for _, c := range p.closedCallbacks {
+			go c(p, *p.CurrentCandle)
+		}
 	}
 }
 
@@ -169,11 +183,11 @@ func (p *Publisher) fetchAndUpdatePrice() {
 	newPrice := p.priceFetcher(p.Ticker)
 	// Ignore <= 0 since the API probably failed
 	if newPrice <= 0 {
-		fmt.Printf("warn: price for from %s for  %s was <= 0 \n", p.Source, p.Ticker)
+		log.Printf("warn: %s's price for %s was <= 0 \n", p.Source, p.Ticker)
 		return
 	}
 	if p.CurrentCandle == nil {
-		p.CurrentCandle = NewCandlestick(newPrice, p.sleepDuration, p.Ticker)
+		p.CurrentCandle = NewCandlestick(newPrice, p.sleepDuration, p.Ticker, p.Source)
 	}
 	candleDone := p.CurrentCandle.Update(newPrice)
 	p.onPriceUpdated()
@@ -183,6 +197,6 @@ func (p *Publisher) fetchAndUpdatePrice() {
 		} else {
 			p.Streak = 0
 		}
-		p.CurrentCandle = NewCandlestick(newPrice, p.sleepDuration, p.Ticker)
+		p.CurrentCandle = NewCandlestick(newPrice, p.sleepDuration, p.Ticker, p.Source)
 	}
 }

@@ -51,6 +51,14 @@ Config file will look like this:
 }
 ```
 
+### API
+
+Checkout `routes.go` for a few of the endpoints, port defaults to 8080
+
+`GET /crypto`
+Returns the publishers associated with all tracked crypto coins
+![Example API](https://i.imgur.com/eMDdj3S.png)
+
 
 ### Desktop Notifications
 
