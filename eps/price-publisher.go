@@ -136,7 +136,7 @@ func isMarketHours() bool {
 	now := time.Now().In(nyse)
 	hour := now.Hour()
 	min := now.Minute()
-	return hour < 16 && (hour > 8 && min >= 30)
+	return hour < 16 && (hour > 9 && min >= 30)
 }
 
 // Volatility returns the percent difference between the high/low and close
