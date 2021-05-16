@@ -9,7 +9,7 @@ import (
 )
 
 func TestCryptoBot_SendGraph(t *testing.T) {
-	cb := initBot("testtoken")
+	cb := initBot(conf.Discord.Token)
 	graph := chart.Chart{
 		Title:      "Test Title",
 		TitleStyle: chart.StyleShow(),

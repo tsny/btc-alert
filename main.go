@@ -23,8 +23,8 @@ func main() {
 		// notif("BTC-ALERT", "Desktop Notifications Enabled", "")
 	}
 	queueService := priceTracking.NewQueueService()
-	// test := eps.Publisher{}
-	queueService.Test(12, 13)
+	test := eps.Publisher{}
+	queueService.TrackSecurities(&test)
 
 	// Crypto
 	for _, ticker := range coinbase.CryptoMap {
