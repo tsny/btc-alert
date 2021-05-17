@@ -3,100 +3,41 @@ package eps
 
 import (
 	"fmt"
-	"log"
 	"math"
 	"time"
 
-	"github.com/tsny/btc-alert/utils"
+	log "github.com/sirupsen/logrus"
 )
+
+// TODO: You should probably need to pass in some data
+// when creating a publisher that defines the ticker, name, source, type, etc
+
+// const (
+// 	SEC_TYPE_STOCK  = "STOCK"
+// 	SEC_TYPE_CRYPTO = "CRYPTO"
+// )
+
+// type Security struct {
+// 	Name   string
+// 	Ticker string
+// 	Type   string
+// }
 
 // Publisher periodically grabs data from its URL
 // and sends out updates with the price it gets back
 type Publisher struct {
+	Ticker          string
 	Source          string // Yahoo, Binance, etc
 	UseMarketHours  bool   // whether the security abides by exchange market hours (NYSE, etc)
-	Ticker          string
 	CurrentCandle   *Candlestick
 	Streak          int                             // How many times in a row the candlestick went up
+	Updates         int                             // How many times the publisher has fetched a new price
 	callbacks       []func(*Publisher, Candlestick) // callbacks upon price update
 	closedCallbacks []func(*Publisher, Candlestick) // callbacks upon candlestick closed
 	streakCallbacks []func(*Publisher, Candlestick, int)
 	active          bool
 	sleepDuration   int
 	priceFetcher    func(string) float64
-}
-
-// Candlestick represents a 'tick' or duration of a security's price
-// https://en.wikipedia.org/wiki/Candlestick_chart
-type Candlestick struct {
-	Ticker            string
-	Source            string
-	DurationInSeconds int
-	Begin             time.Time
-	LastUpdate        time.Time
-	Previous          float64
-	Current           float64
-	Close             float64
-	Open              float64
-	High              float64
-	Low               float64
-	Complete          bool
-}
-
-// NewCandlestick is a constructor
-func NewCandlestick(open float64, dur int, ticker, source string) *Candlestick {
-	return &Candlestick{
-		Ticker:            ticker,
-		DurationInSeconds: dur,
-		Open:              open,
-		Begin:             time.Now(),
-	}
-}
-
-// Update checks the candlestick's lows/highs
-// and returns whether or not the candlestick has completed
-func (c *Candlestick) Update(price float64) bool {
-	c.Previous = c.Current
-	c.LastUpdate = time.Now()
-	c.Current = price
-	if price < c.Low || c.Low == 0 {
-		c.Low = price
-	}
-	if price > c.High {
-		c.High = price
-	}
-	if time.Since(c.Begin).Seconds() >= 60 {
-		c.Close = price
-		c.Complete = true
-		return true
-	}
-	return false
-}
-
-// ClosedAboveOpen is whether or not the Candlestick
-// completed with a price above it's open price
-func (c Candlestick) ClosedAboveOpen() bool {
-	return c.Close > c.Open
-}
-
-// OpenCloseDiff returns the absolute difference between the candle's
-// close and open
-func (c Candlestick) OpenCloseDiff() float64 {
-	return math.Abs(c.Close - c.Open)
-}
-
-func (c Candlestick) String() string {
-	emoji := utils.GetEmoji(c.Current, c.Previous)
-	diff := c.Current - c.Previous
-	percent := (diff / c.Current) * 100
-	if c.Previous == 0.00 {
-		return fmt.Sprintf("%s: (%s) $%.2f \n", emoji, c.Ticker, c.Current)
-	}
-	s := "%s (%s) $%.2f | High: $%.2f | Low: $%.2f | Chg: $%.2f | Percent: %.2f%% | Vol: %.2f%%"
-	if c.Current < 1 {
-		s = "%s (%s) $%.5f | High: $%.5f | Low: $%.5f | Chg: $%.5f | Percent: %.2f%% | Vol: %.2f%%"
-	}
-	return fmt.Sprintf(s, emoji, c.Ticker, c.Current, c.High, c.Low, diff, percent, c.Volatility())
 }
 
 // New is a constructor
@@ -113,6 +54,10 @@ func New(priceFetcher func(string) float64, ticker string, source string, start 
 	return p
 }
 
+func (p *Publisher) String() string {
+	return fmt.Sprintf("%s [%s] - %d Updates - Active? [%v]", p.Ticker, p.Source, p.Updates, p.active)
+}
+
 // SetActive sets the publishers state
 // active determines whether it will fetch and produce events
 func (p *Publisher) SetActive(state bool) {
@@ -121,13 +66,15 @@ func (p *Publisher) SetActive(state bool) {
 
 // StartProducing loops and updates the price from the chosen exchange
 func (p *Publisher) init() {
-	curr := p.priceFetcher(p.Ticker)
-	log.Printf("%s -- Price Publisher active -- Current: %.2f\n", p.Ticker, curr)
 	go func() {
+		p.active = true
+		curr := p.priceFetcher(p.Ticker)
+		s := "%s -- Price Publisher [%s] active -- Current: %.2f\n"
+		log.Infof(s, p.Ticker, p.Source, curr)
 		for {
 			// Disable self if past market hours
 			if p.UseMarketHours && !isMarketHours() && p.active {
-				log.Printf("%s disabled as it is not market hours", p.Ticker)
+				log.Warnf("%s disabled as it is not market hours", p.Ticker)
 				p.active = false
 			}
 			if p.active {
@@ -152,15 +99,16 @@ func (c Candlestick) Volatility() float64 {
 	return (math.Abs(c.High-c.Low) / c.Close) * 100
 }
 
-// Subscribe assigns the func passed in to be called whenever
+// RegisterSubscriber assigns the func passed in to be called whenever
 // the publisher has fetched and updated the price of the security
 // todo: maybe this should take in an interface rather than just a func
-func (p *Publisher) Subscribe(f func(p *Publisher, c Candlestick)) {
-	log.Printf("%s Publisher has new subscriber\n", p.Ticker)
-	p.callbacks = append(p.callbacks, f)
+func (p *Publisher) RegisterSubscriber(subscriber func(p *Publisher, c Candlestick)) {
+	log.Infof("%s Publisher has new subscriber\n", p.Ticker)
+	p.callbacks = append(p.callbacks, subscriber)
 }
 
 func (p *Publisher) onPriceUpdated() {
+	p.Updates++
 	for _, c := range p.callbacks {
 		go c(p, *p.CurrentCandle)
 	}
@@ -183,7 +131,7 @@ func (p *Publisher) fetchAndUpdatePrice() {
 	newPrice := p.priceFetcher(p.Ticker)
 	// Ignore <= 0 since the API probably failed
 	if newPrice <= 0 {
-		log.Printf("warn: %s's price for %s was <= 0 \n", p.Source, p.Ticker)
+		log.Warnf("%s's price for %s was <= 0 \n", p.Source, p.Ticker)
 		return
 	}
 	if p.CurrentCandle == nil {

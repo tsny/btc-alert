@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"time"
 
-	"github.com/tsny/btc-alert/eps"
+	"btc-alert/eps"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type listener struct {
@@ -26,7 +27,7 @@ func newListener(p *eps.Publisher, intervals []interval, thresholds []threshold)
 	for _, t := range cpt {
 		l.thresholds = append(l.thresholds, t)
 	}
-	p.Subscribe(l.onPriceUpdated)
+	p.RegisterSubscriber(l.onPriceUpdated)
 	l.publisher = p
 	return &l
 }
@@ -49,7 +50,7 @@ func (l *listener) onPriceUpdated(p *eps.Publisher, c eps.Candlestick) {
 		cryptoBot.SendMessage(s, "everyone", false)
 		s = s + " <-- ALERT"
 	}
-	log.Print(s)
+	log.Info(s)
 }
 
 func (l *listener) checkIntervals(p *eps.Publisher, new, old float64) {
@@ -57,8 +58,6 @@ func (l *listener) checkIntervals(p *eps.Publisher, new, old float64) {
 		if interval.beginPrice == 0 {
 			l.intervals[i].beginPrice = new
 		}
-		// fmt.Printf("%d minute interval %s occurred %d times\n",
-		// 	interval.MaxOccurences, p.Source, interval.occurrences)
 		l.intervals[i].occurrences++
 		if interval.occurrences >= interval.MaxOccurences {
 			interval.onCompleted(p, new, old)

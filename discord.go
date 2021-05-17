@@ -1,20 +1,29 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/sirupsen/logrus"
-	"github.com/tsny/btc-alert/coinbase"
+	"btc-alert/coinbase"
+	"btc-alert/priceTracking"
+
+	log "github.com/sirupsen/logrus"
+	"github.com/wcharczuk/go-chart"
+
+	"btc-alert/eps"
+	"btc-alert/yahoo"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/olekukonko/tablewriter"
-	"github.com/tsny/btc-alert/eps"
-	"github.com/tsny/btc-alert/yahoo"
 )
+
+// TODO: We should have crypto bot subscribe to events rather than the
+// events in files like listener.go directly call crypto bot, that way
+// if discord is inactive we don't have errors
 
 // CryptoBot is a service that communicates with discord and holds onto alerts
 // that are created for discord users
@@ -40,17 +49,17 @@ var cryptoBot *CryptoBot
 func initBot(token string) *CryptoBot {
 	dg, err := discordgo.New("Bot " + token)
 	if err != nil {
-		fmt.Println("error creating Discord session,", err)
+		log.Infof("error creating Discord session,", err)
 		return nil
 	}
 	dg.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsGuildMessages)
 	err = dg.Open()
 	if err != nil {
-		fmt.Println("error opening connection,", err)
+		log.Infof("error opening connection,", err)
 		return nil
 	}
 
-	println("Connected to Discord server")
+	log.Infof("Connected to Discord server")
 	cb := &CryptoBot{ds: dg, channelId: conf.Discord.ChannelID}
 	dg.AddHandler(cb.OnNewMessage)
 	dg.AddHandler(cb.OnDisconnect)
@@ -63,7 +72,7 @@ func (cb *CryptoBot) SubscribeUserToPriceTarget(userID string, target float64, p
 	startedBelow := p.GetPrice() < target
 	x := priceAlert{userID, p, target, p.CurrentCandle.Current, true, startedBelow}
 	str := "Subbing %s to %s price point %.4f | Current: %.4f\n"
-	fmt.Printf(str, userID, p.Ticker, target, p.GetPrice())
+	log.Infof(str, userID, p.Ticker, target, p.GetPrice())
 	f := func(p *eps.Publisher, candle eps.Candlestick) {
 		if !x.active {
 			return
@@ -77,7 +86,7 @@ func (cb *CryptoBot) SubscribeUserToPriceTarget(userID string, target float64, p
 			x.active = false
 		}
 	}
-	p.Subscribe(f)
+	p.RegisterSubscriber(f)
 }
 
 // SubscribeToTicker adds a ticker to the general watchlist
@@ -135,7 +144,7 @@ func (cb *CryptoBot) SendMessage(str string, userID string, tts bool) (*discordg
 
 // OnDisconnect logs whenever we disconnect (for debugging)
 func (cb *CryptoBot) OnDisconnect(s *discordgo.Session, hb *discordgo.Disconnect) {
-	logrus.Infof("Bot disconnected")
+	log.Infof("Bot disconnected")
 }
 
 func (cb *CryptoBot) SendGraph(content string, reader io.Reader) {
@@ -151,7 +160,7 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 	if m.Author.ID == s.State.User.ID {
 		return
 	}
-	logrus.Infof("Processing msg '%s' from '%s'", m.Content, m.Author.Username)
+	log.Infof("Processing msg '%s' from '%s'", m.Content, m.Author.Username)
 
 	msg := strings.TrimSpace(m.Content)
 	if msg[0] != '!' {
@@ -223,7 +232,9 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 		}
 	}
 
-	if parts[0] == "sub" {
+	// Todo: make this a case and extract to funcs
+	operation := parts[0]
+	if operation == "sub" {
 		if len(parts) < 3 {
 			cb.SubscribeToTicker(ticker, pub)
 			cb.SendMessage("Following "+ticker, "", false)
@@ -240,7 +251,7 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 		cb.SendMessage(discordMessage, "", false)
 	}
 
-	if parts[0] == "get" {
+	if operation == "get" {
 		// Small delay, todo: get rid
 		if pub.CurrentCandle == nil {
 			time.Sleep(2 * time.Second)
@@ -249,7 +260,7 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 		return
 	}
 
-	if parts[0] == "trade" {
+	if operation == "trade" {
 		cdl := pub.CurrentCandle
 		fee := cdl.Current * .01
 		str := "%s -- $%.2f -- Fee: $%.2f -- 2%% Gain: $%.2f ($%.2f)"
@@ -257,10 +268,29 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 		cb.SendMessage(str, "", false)
 	}
 
-	if parts[0] == "stat" {
+	if operation == "stat" {
 		d := coinbase.Get24Hour(ticker)
 		str := "24 Hour Status: %s -- High: $%s | Low: $%s | Open $%"
 		str = fmt.Sprintf(str, ticker, d.High, d.Low, d.Open)
 		cb.SendMessage(str, "", false)
+	}
+
+	if operation == "chart" {
+		if queue := queueService.FindByTicker(ticker); queue != nil {
+			graph := priceTracking.QueueToGraph(*queue)
+			buffer := bytes.NewBuffer([]byte{})
+			err := graph.Render(chart.PNG, buffer)
+			if err != nil {
+				println(err)
+				return
+			}
+			file := &discordgo.File{Name: ticker + ".png", Reader: buffer}
+			msg := &discordgo.MessageSend{
+				Files: []*discordgo.File{file},
+			}
+			cb.ds.ChannelMessageSendComplex(cb.channelId, msg)
+		} else {
+			cb.SendMessage("Couldn't find ticker "+ticker, "", false)
+		}
 	}
 }

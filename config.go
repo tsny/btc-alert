@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/tsny/btc-alert/utils"
+	"btc-alert/utils"
 )
 
 type config struct {

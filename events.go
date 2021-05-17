@@ -2,12 +2,11 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"math"
 	"time"
 
-	"github.com/tsny/btc-alert/eps"
-	"github.com/tsny/btc-alert/utils"
+	"btc-alert/eps"
+	"btc-alert/utils"
 )
 
 var sf = fmt.Sprintf
@@ -36,25 +35,12 @@ type interval struct {
 func (i *interval) onCompleted(p *eps.Publisher, new, old float64) {
 	diff := new - i.beginPrice
 	percent := (diff / i.beginPrice) * 100
-	prefix := ""
-	if math.Abs(percent) > i.PercentThreshold {
-		prefix = "ALERT"
-	}
-
 	totalChange := sf("%s --> %s", utils.Fts(i.beginPrice), utils.Fts(new))
 	changes := sf("Chg: %s | Percent: %.3f%%", utils.Fts(diff), percent)
-
-	str := "%s: (%s) %s%d Min | %s | %s"
-	bannerText := sf(str, utils.GetTime(), p.Ticker, prefix, i.occurrences, totalChange, changes)
-	log.Print(bannerText)
-
 	alert := sf("(%s) %d Min | %s | %s", p.Ticker, i.occurrences, totalChange, changes)
 
+	//todo: don't directly call discord
 	if math.Abs(percent) > i.PercentThreshold {
-		if conf.DesktopNotifications {
-			// hdr := sf("Last %d Min | %.2f%%", i.MaxOccurences, i.PercentThreshold)
-			// notif(hdr, alert, "assets/warning.png")
-		}
 		if conf.Discord.Enabled {
 			cryptoBot.SendMessage(alert, "everyone", false)
 		}
@@ -75,11 +61,7 @@ func (t *threshold) onThresholdReached(p *eps.Publisher, breachedUp bool, new, o
 	str := "%s %s: (%s) %s | %s ($%.2f)"
 	body := sf(str, emoji, utils.GetTime(), p.Ticker, priceMovement, fpm(t.beginPrice, new), new-t.beginPrice)
 
-	if conf.DesktopNotifications {
-		// notif(priceMovement, body, "assets/warning.png")
-	}
-	utils.Banner("ALERT " + body)
-
+	// utils.Banner("ALERT " + body)
 	if conf.Discord.Enabled {
 		cryptoBot.SendMessage(body, "", false)
 	}

@@ -11,13 +11,21 @@ type CandleQueue struct {
 	cap    int
 }
 
-func NewQueue(cap int, data ...eps.Candlestick) CandleQueue {
+func NewQueue(cap int, data ...eps.Candlestick) *CandleQueue {
 	q := CandleQueue{cap: cap}
 	if len(data) > 0 {
 		q.inner = data
 		q.Newest = data[0]
 	}
-	return q
+	return &q
+}
+
+func (l *CandleQueue) GetAllPrices() []float64 {
+	var arr []float64
+	for _, v := range l.inner {
+		arr = append(arr, v.Close)
+	}
+	return arr
 }
 
 func (l *CandleQueue) Add(c eps.Candlestick) {

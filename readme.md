@@ -59,6 +59,11 @@ Checkout `routes.go` for a few of the endpoints, port defaults to 8080
 Returns the publishers associated with all tracked crypto coins
 ![Example API](https://i.imgur.com/eMDdj3S.png)
 
+#### Graphs!
+I'm working on rudimentary caching that allows me to do stuff like plot over a graph
+You can hit `GET /symbol/{symbol/graph` to get a bare bones chart of the recent price of the stock
+
+![Example BTC Graph](https://i.imgur.com/qME6WLJ.png)
 
 ### Desktop Notifications
 
