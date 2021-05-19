@@ -1,14 +1,15 @@
-- Add beginTime -> endTime in movement alerts for like $1000
+- [ ] Add beginTime -> endTime in movement alerts for like $1000
 
-- Save queues into csv so they can be reloaded
+- [ ] Save queues into csv so they can be reloaded
 
-- Streaks should be tracked both directions and mention the current price and percentage change
+- [x] Streaks should be tracked both directions and mention the current price and percentage change
 
-- Should we cache the last 60 minutes worth of prices so that we can do things to them?  
+- [ ] Should we cache the last 60 minutes worth of prices so that we can do things to them?  
     - Somewhat done
 
-- Can we make graphs?
-    - DONE
+- [x] Basic graphs
+
+- [ ] Maybe there should be thresholds that have messages get sent out but then we have addl. thresholds for alerts that hit @everyone
 
 ## Scratch
 
