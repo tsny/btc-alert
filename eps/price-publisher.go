@@ -9,20 +9,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// TODO: You should probably need to pass in some data
-// when creating a publisher that defines the ticker, name, source, type, etc
-
-// const (
-// 	SEC_TYPE_STOCK  = "STOCK"
-// 	SEC_TYPE_CRYPTO = "CRYPTO"
-// )
-
-// type Security struct {
-// 	Name   string
-// 	Ticker string
-// 	Type   string
-// }
-
 // Publisher periodically grabs data from its URL
 // and sends out updates with the price it gets back
 type Publisher struct {
@@ -40,8 +26,8 @@ type Publisher struct {
 	priceFetcher    func(string) float64
 }
 
-// New is a constructor
-func New(priceFetcher func(string) float64, ticker string, source string, start bool, sleepDur int) *Publisher {
+// NewPublisher is a constructor
+func NewPublisher(priceFetcher func(string) float64, ticker, source string, start bool, sleepDur int) *Publisher {
 	p := &Publisher{
 		Source:        source,
 		Ticker:        ticker,
@@ -66,11 +52,9 @@ func (p *Publisher) SetActive(state bool) {
 
 // StartProducing loops and updates the price from the chosen exchange
 func (p *Publisher) init() {
+	firstRun := true
 	go func() {
 		p.active = true
-		curr := p.priceFetcher(p.Ticker)
-		s := "%s -- Price Publisher [%s] active -- Current: %.2f\n"
-		log.Infof(s, p.Ticker, p.Source, curr)
 		for {
 			// Disable self if past market hours
 			if p.UseMarketHours && !isMarketHours() && p.active {
@@ -79,6 +63,12 @@ func (p *Publisher) init() {
 			}
 			if p.active {
 				p.fetchAndUpdatePrice()
+				if firstRun {
+					curr := p.priceFetcher(p.Ticker)
+					s := "%s -- Price Publisher [%s] active -- Current: %.2f\n"
+					log.Infof(s, p.Ticker, p.Source, curr)
+					firstRun = false
+				}
 			}
 			time.Sleep(time.Duration(p.sleepDuration) * time.Second)
 		}

@@ -17,14 +17,15 @@ type TLR struct {
 }
 
 type Result struct {
+	Symbol                            string  `json:"symbol"`
+	ShortName                         string  `json:"shortName"`
+	QuoteSourceName                   string  `json:"quoteSourceName"`
 	Language                          string  `json:"language"`
 	Region                            string  `json:"region"`
 	QuoteType                         string  `json:"quoteType"`
-	QuoteSourceName                   string  `json:"quoteSourceName"`
 	Triggerable                       bool    `json:"triggerable"`
 	Currency                          string  `json:"currency"`
 	Exchange                          string  `json:"exchange"`
-	ShortName                         string  `json:"shortName"`
 	MessageBoardID                    string  `json:"messageBoardId"`
 	ExchangeTimezoneName              string  `json:"exchangeTimezoneName"`
 	ExchangeTimezoneShortName         string  `json:"exchangeTimezoneShortName"`
@@ -32,13 +33,6 @@ type Result struct {
 	Market                            string  `json:"market"`
 	EsgPopulated                      bool    `json:"esgPopulated"`
 	FirstTradeDateMilliseconds        int64   `json:"firstTradeDateMilliseconds"`
-	PriceHint                         int     `json:"priceHint"`
-	CirculatingSupply                 int     `json:"circulatingSupply"`
-	LastMarket                        string  `json:"lastMarket"`
-	Volume24Hr                        int64   `json:"volume24Hr"`
-	VolumeAllCurrencies               int64   `json:"volumeAllCurrencies"`
-	FromCurrency                      string  `json:"fromCurrency"`
-	ToCurrency                        string  `json:"toCurrency"`
 	RegularMarketChange               float64 `json:"regularMarketChange"`
 	RegularMarketChangePercent        float64 `json:"regularMarketChangePercent"`
 	RegularMarketTime                 int     `json:"regularMarketTime"`
@@ -72,7 +66,6 @@ type Result struct {
 	ExchangeDataDelayedBy             int     `json:"exchangeDataDelayedBy"`
 	Tradeable                         bool    `json:"tradeable"`
 	MarketState                       string  `json:"marketState"`
-	Symbol                            string  `json:"symbol"`
 }
 
 // QuoteResponse is the top level json element from Yahoo Finance API

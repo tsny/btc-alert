@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"btc-alert/coinbase"
 	"btc-alert/priceTracking"
 
 	log "github.com/sirupsen/logrus"
@@ -209,31 +208,24 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 	}
 
 	ticker := strings.ToUpper(parts[1])
-	cryptoTicker := ticker
-	if i := strings.Index(ticker, "-"); i == -1 {
-		cryptoTicker = ticker + "-USD"
-	}
-	pub, ok := PublisherMap[ticker]
-	if ok {
-		println("Found existing yahoo publisher for " + ticker)
-	} else {
-		pub, ok = PublisherMap[cryptoTicker]
-		if ok {
-			println("Found existing crypto publisher for " + cryptoTicker)
+	sec, pub := lookupService.FindSecurityByNameOrTicker(ticker)
+	if sec == nil {
+		log.Warnf("couldn't find publisher for %s", ticker)
+		if deets := yahoo.GetDetails(ticker); deets != nil && deets.ShortName != "" {
+			// Make a new publisher on the fly if we're not already tracking it
+			sec := eps.NewStock(deets.ShortName, ticker, "Yahoo")
+			pub = eps.NewPublisher(yahoo.GetPrice, ticker, "Yahoo", true, 30)
+			pub.UseMarketHours = true
+			lookupService.Register(sec, pub)
 		} else {
-			if yahoo.GetPrice(ticker) > 0 {
-				pub = eps.New(yahoo.GetPrice, ticker, "Yahoo", true, 5)
-				PublisherMap[ticker] = pub
-				println("Made new publisher for subscriber -- " + ticker)
-			} else {
-				println("Could not find valid ticker for " + ticker)
-				return
-			}
+			cb.SendMessage("Could not find details for ticker "+ticker, "", false)
+			return
 		}
 	}
 
 	// Todo: make this a case and extract to funcs
 	operation := parts[0]
+
 	if operation == "sub" {
 		if len(parts) < 3 {
 			cb.SubscribeToTicker(ticker, pub)
@@ -256,6 +248,9 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 		if pub.CurrentCandle == nil {
 			time.Sleep(2 * time.Second)
 		}
+		if pub.CurrentCandle == nil {
+			return
+		}
 		cb.SendMessage(pub.CurrentCandle.String(), "", false)
 		return
 	}
@@ -268,14 +263,7 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 		cb.SendMessage(str, "", false)
 	}
 
-	if operation == "stat" {
-		d := coinbase.Get24Hour(ticker)
-		str := "24 Hour Status: %s -- High: $%s | Low: $%s | Open $%"
-		str = fmt.Sprintf(str, ticker, d.High, d.Low, d.Open)
-		cb.SendMessage(str, "", false)
-	}
-
-	if operation == "chart" {
+	if operation == "chart" || operation == "graph" {
 		if queue := queueService.FindByTicker(ticker); queue != nil {
 			graph := priceTracking.QueueToGraph(*queue)
 			buffer := bytes.NewBuffer([]byte{})

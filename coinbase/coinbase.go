@@ -1,10 +1,12 @@
 package coinbase
 
 import (
+	"btc-alert/eps"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -28,18 +30,26 @@ type OneDayCandle struct {
 }
 
 // CryptoMap is a map of the Coin's simple name to its ticker
-var CryptoMap = map[string]string{
-	"BTC":  "BTC-USD",
-	"BCH":  "BCH-USD",
-	"DASH": "DASH-USD",
-	"ETH":  "ETH-USD",
-	"EOS":  "EOS-USD",
-	"ETC":  "ETC-USD",
-	"ZEC":  "ZEC-USD",
-	"MKR":  "MKR-USD",
-	"XLM":  "XLM-USD",
-	"ATOM": "ATOM-USD",
-	"LTC":  "LTC-USD",
+var CryptoMap = []*eps.Security{
+	{Name: "Bitcoin", Ticker: "BTC-USD"},
+	{Name: "Bitcoin Cash", Ticker: "BCH-USD"},
+	{Name: "DASH", Ticker: "DASH-USD"},
+	{Name: "Ethereum", Ticker: "ETH-USD"},
+	{Name: "EOS", Ticker: "EOS-USD"},
+	{Name: "Ethereum Classic", Ticker: "ETC-USD"},
+	{Name: "ZEC", Ticker: "ZEC-USD"},
+	{Name: "Maker", Ticker: "MKR-USD"},
+	{Name: "XLM", Ticker: "XLM-USD"},
+	{Name: "ATOM", Ticker: "ATOM-USD"},
+	{Name: "Lite Coin", Ticker: "LTC-USD"},
+}
+
+func init() {
+	for _, c := range CryptoMap {
+		c.AdditionalNames = append(c.AdditionalNames, strings.ReplaceAll(c.Ticker, "-USD", ""))
+		c.Type = eps.Crypto
+		c.Source = "Coinbase"
+	}
 }
 
 // TickerURL is the Coinbase Ticker API URL

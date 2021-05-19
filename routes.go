@@ -20,6 +20,7 @@ func initRoutes() *mux.Router {
 	r.HandleFunc("/symbol/{symbol}", getSymbol).Methods("GET")
 	r.HandleFunc("/symbol/{symbol}/graph", getGraph).Methods("GET")
 	r.HandleFunc("/symbol/{symbol}/prices", getRecentPrices).Methods("GET")
+	r.HandleFunc("/symbol/{symbol}/details", getStockDetails).Methods("GET")
 	r.HandleFunc("/movers", getTopMovers).Methods("GET")
 	r.HandleFunc("/watchlist", getWatchlist).Methods("GET")
 	r.HandleFunc("/watchlist", postRefreshWatchlist).Methods("POST")
@@ -33,11 +34,16 @@ func getTopMovers(w http.ResponseWriter, r *http.Request) {
 
 func getSymbol(w http.ResponseWriter, r *http.Request) {
 	symbol := mux.Vars(r)["symbol"]
-	if pub, ok := PublisherMap[symbol]; ok {
+	if sec, pub := lookupService.FindSecurityByNameOrTicker(symbol); sec != nil {
 		sendJSON(w, pub)
 	} else {
 		sendJSON(w, yahoo.GetDetails(symbol))
 	}
+}
+
+func getStockDetails(w http.ResponseWriter, r *http.Request) {
+	symbol := mux.Vars(r)["symbol"]
+	sendJSON(w, yahoo.GetDetails(symbol))
 }
 
 func getRecentPrices(w http.ResponseWriter, r *http.Request) {
