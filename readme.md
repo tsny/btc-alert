@@ -65,14 +65,6 @@ You can hit `GET /symbol/{symbol/graph` to get a bare bones chart of the recent 
 
 ![Example BTC Graph](https://i.imgur.com/qME6WLJ.png)
 
-### Desktop Notifications
-
-Example:
-
-![Example Screenshot](https://i.imgur.com/VZ6bHZU.png)
-
-Notifications work on both Mac and Windows
-
 ### Discord
 
 If you have a Discord bot, you can redirect to there!
