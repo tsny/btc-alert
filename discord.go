@@ -252,6 +252,7 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 			return
 		}
 		cb.SendMessage(pub.CurrentCandle.String(), "", false)
+		cb.SendMessage(pub.StreakSummary(), "", false)
 		return
 	}
 

@@ -75,6 +75,7 @@ func (c Candlestick) String() string {
 		return fmt.Sprintf("%s: (%s) $%.2f \n", emoji, c.Ticker, c.Current)
 	}
 	s := "%s (%s) $%.2f | High: $%.2f | Low: $%.2f | Chg: $%.2f | Percent: %.2f%% | Vol: %.2f%%"
+	// Larger formatting for crypto prices below $1
 	if c.Current < 1 {
 		s = "%s (%s) $%.5f | High: $%.5f | Low: $%.5f | Chg: $%.5f | Percent: %.2f%% | Vol: %.2f%%"
 	}

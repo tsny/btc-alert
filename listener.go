@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"time"
 
 	"btc-alert/eps"
@@ -38,8 +37,7 @@ func (l *listener) onPriceUpdated(p *eps.Publisher, c eps.Candlestick) {
 	}
 	if p.Streak > conf.StreakAlert && conf.StreakAlert > 0 {
 		if conf.Discord.Enabled {
-			str := fmt.Sprintf("%s has a streak of %v", p.Ticker, p.Streak)
-			cryptoBot.SendMessage(str, "", false)
+			cryptoBot.SendMessage(p.StreakSummary(), "", false)
 		}
 	}
 	go l.checkIntervals(p, c.Current, c.Previous)

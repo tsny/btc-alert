@@ -16,7 +16,9 @@ type Publisher struct {
 	Source          string // Yahoo, Binance, etc
 	UseMarketHours  bool   // whether the security abides by exchange market hours (NYSE, etc)
 	CurrentCandle   *Candlestick
-	Streak          int                             // How many times in a row the candlestick went up
+	PreviousCandle  *Candlestick
+	Streak          int // How many times in a row the candlestick moved in a certain direction
+	PositiveStreak  bool
 	Updates         int                             // How many times the publisher has fetched a new price
 	callbacks       []func(*Publisher, Candlestick) // callbacks upon price update
 	closedCallbacks []func(*Publisher, Candlestick) // callbacks upon candlestick closed
@@ -130,11 +132,37 @@ func (p *Publisher) fetchAndUpdatePrice() {
 	candleDone := p.CurrentCandle.Update(newPrice)
 	p.onPriceUpdated()
 	if candleDone {
-		if p.CurrentCandle.ClosedAboveOpen() {
-			p.Streak++
-		} else {
-			p.Streak = 0
-		}
+		p.checkStreak()
+		p.PreviousCandle = p.CurrentCandle
 		p.CurrentCandle = NewCandlestick(newPrice, p.sleepDuration, p.Ticker, p.Source)
 	}
+}
+
+// Checks whether a security is streaking in either direction
+func (p *Publisher) checkStreak() {
+	// If there is no streak, begin it
+	if p.Streak == 0 {
+		p.Streak++
+		p.PositiveStreak = p.CurrentCandle.ClosedAboveOpen()
+		return
+	}
+	// Otherwise, make sure the streak is still going in whichever direction
+	if p.CurrentCandle.ClosedAboveOpen() && p.PositiveStreak {
+		p.Streak++
+	} else if !p.CurrentCandle.ClosedAboveOpen() && !p.PositiveStreak {
+		p.Streak++
+	} else {
+		p.Streak = 0
+	}
+}
+
+// Returns a summary string of the security's current streak
+// Ex: BTC-USD [Coinbase] has a streak of -8 | [40003.23]
+func (p *Publisher) StreakSummary() string {
+	status := "-"
+	if p.PositiveStreak {
+		status = "+"
+	}
+	str := "%s [%s] has a streak of %s%d | [%v]"
+	return fmt.Sprintf(str, p.Ticker, p.Source, status, p.Streak, p.CurrentCandle.Current)
 }
