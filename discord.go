@@ -69,7 +69,7 @@ func initBot(token string) *CryptoBot {
 // relative to the price the security was at when the user first subscribed
 func (cb *CryptoBot) SubscribeUserToPriceTarget(userID string, target float64, p *eps.Publisher) {
 	startedBelow := p.GetPrice() < target
-	x := priceAlert{userID, p, target, p.CurrentCandle.Current, true, startedBelow}
+	x := priceAlert{userID, p, target, p.Candle.Current, true, startedBelow}
 	str := "Subbing %s to %s price point %.4f | Current: %.4f\n"
 	log.Infof(str, userID, p.Ticker, target, p.GetPrice())
 	f := func(p *eps.Publisher, candle eps.Candlestick) {
@@ -245,19 +245,19 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 
 	if operation == "get" {
 		// Small delay, todo: get rid
-		if pub.CurrentCandle == nil {
+		if pub.Candle == nil {
 			time.Sleep(2 * time.Second)
 		}
-		if pub.CurrentCandle == nil {
+		if pub.Candle == nil {
 			return
 		}
-		cb.SendMessage(pub.CurrentCandle.String(), "", false)
+		cb.SendMessage(pub.Candle.String(), "", false)
 		cb.SendMessage(pub.StreakSummary(), "", false)
 		return
 	}
 
 	if operation == "trade" {
-		cdl := pub.CurrentCandle
+		cdl := pub.Candle
 		fee := cdl.Current * .01
 		str := "%s -- $%.2f -- Fee: $%.2f -- 2%% Gain: $%.2f ($%.2f)"
 		str = fmt.Sprintf(str, cdl.Ticker, cdl.Current, fee, fee*2, fee*2+cdl.Current)
