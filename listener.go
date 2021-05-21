@@ -32,7 +32,7 @@ func newListener(p *eps.Publisher, intervals []interval, thresholds []threshold)
 }
 
 func (l *listener) onPriceUpdated(p *eps.Publisher, c eps.Candlestick) {
-	if !c.Complete || c.Current == 0 {
+	if !c.Complete || c.Price == 0 {
 		return
 	}
 	if p.Streak > conf.StreakAlert && conf.StreakAlert > 0 {
@@ -40,8 +40,8 @@ func (l *listener) onPriceUpdated(p *eps.Publisher, c eps.Candlestick) {
 			cryptoBot.SendMessage(p.StreakSummary(), "", false)
 		}
 	}
-	go l.checkIntervals(p, c.Current, c.Previous)
-	go l.checkThresholds(p, c.Current, c.Previous)
+	go l.checkIntervals(p, c.Price, c.Previous)
+	go l.checkThresholds(p, c.Price, c.Previous)
 
 	s := c.String()
 	if c.Volatility() > conf.VolatilityAlert {

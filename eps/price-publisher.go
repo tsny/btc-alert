@@ -15,7 +15,7 @@ type Publisher struct {
 	Ticker          string
 	Source          string // Yahoo, Binance, etc
 	UseMarketHours  bool   // whether the security abides by exchange market hours (NYSE, etc)
-	CurrentCandle   *Candlestick
+	Candle          *Candlestick
 	PreviousCandle  *Candlestick
 	Streak          int // How many times in a row the candlestick moved in a certain direction
 	PositiveStreak  bool
@@ -102,21 +102,21 @@ func (p *Publisher) RegisterSubscriber(subscriber func(p *Publisher, c Candlesti
 func (p *Publisher) onPriceUpdated() {
 	p.Updates++
 	for _, c := range p.callbacks {
-		go c(p, *p.CurrentCandle)
+		go c(p, *p.Candle)
 	}
-	if p.CurrentCandle.Complete {
+	if p.Candle.Complete {
 		for _, c := range p.closedCallbacks {
-			go c(p, *p.CurrentCandle)
+			go c(p, *p.Candle)
 		}
 	}
 }
 
 // GetPrice returns the current price of the configured ticker
 func (p *Publisher) GetPrice() float64 {
-	if p.CurrentCandle == nil {
+	if p.Candle == nil {
 		return p.priceFetcher(p.Ticker)
 	}
-	return p.CurrentCandle.Current
+	return p.Candle.Price
 }
 
 func (p *Publisher) fetchAndUpdatePrice() {
@@ -126,15 +126,15 @@ func (p *Publisher) fetchAndUpdatePrice() {
 		log.Warnf("%s's price for %s was <= 0 \n", p.Source, p.Ticker)
 		return
 	}
-	if p.CurrentCandle == nil {
-		p.CurrentCandle = NewCandlestick(newPrice, p.sleepDuration, p.Ticker, p.Source)
+	if p.Candle == nil {
+		p.Candle = NewCandlestick(newPrice, p.sleepDuration, p.Ticker, p.Source)
 	}
-	candleDone := p.CurrentCandle.Update(newPrice)
+	candleDone := p.Candle.Update(newPrice)
 	p.onPriceUpdated()
 	if candleDone {
 		p.checkStreak()
-		p.PreviousCandle = p.CurrentCandle
-		p.CurrentCandle = NewCandlestick(newPrice, p.sleepDuration, p.Ticker, p.Source)
+		p.PreviousCandle = p.Candle
+		p.Candle = NewCandlestick(newPrice, p.sleepDuration, p.Ticker, p.Source)
 	}
 }
 
@@ -143,13 +143,13 @@ func (p *Publisher) checkStreak() {
 	// If there is no streak, begin it
 	if p.Streak == 0 {
 		p.Streak++
-		p.PositiveStreak = p.CurrentCandle.ClosedAboveOpen()
+		p.PositiveStreak = p.Candle.ClosedAboveOpen()
 		return
 	}
 	// Otherwise, make sure the streak is still going in whichever direction
-	if p.CurrentCandle.ClosedAboveOpen() && p.PositiveStreak {
+	if p.Candle.ClosedAboveOpen() && p.PositiveStreak {
 		p.Streak++
-	} else if !p.CurrentCandle.ClosedAboveOpen() && !p.PositiveStreak {
+	} else if !p.Candle.ClosedAboveOpen() && !p.PositiveStreak {
 		p.Streak++
 	} else {
 		p.Streak = 0
@@ -163,6 +163,6 @@ func (p *Publisher) StreakSummary() string {
 	if p.PositiveStreak {
 		status = "+"
 	}
-	str := "%s [%s] has a streak of %s%d | [%v]"
-	return fmt.Sprintf(str, p.Ticker, p.Source, status, p.Streak, p.CurrentCandle.Current)
+	str := "%s (%.2f) [%s] has a streak of %s%d | [%v]"
+	return fmt.Sprintf(str, p.Ticker, p.Candle.Price, p.Source, status, p.Streak, p.Candle.Price)
 }

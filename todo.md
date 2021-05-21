@@ -9,6 +9,8 @@
 
 - [x] Basic graphs
 
+- [ ] Disable Discord notifications/parsing via hostname? Something like `!toggle <hostname>`
+
 - [ ] Maybe there should be thresholds that have messages get sent out but then we have addl. thresholds for alerts that hit @everyone
 
 ## Scratch
