@@ -157,12 +157,12 @@ func (p *Publisher) checkStreak() {
 }
 
 // Returns a summary string of the security's current streak
-// Ex: BTC-USD [Coinbase] has a streak of -8 | [40003.23]
+// Ex: BTC-USD (45023.23) [Coinbase] has a streak of -8
 func (p *Publisher) StreakSummary() string {
 	status := "-"
 	if p.PositiveStreak {
 		status = "+"
 	}
-	str := "%s (%.2f) [%s] has a streak of %s%d | [%v]"
-	return fmt.Sprintf(str, p.Ticker, p.Candle.Price, p.Source, status, p.Streak, p.Candle.Price)
+	str := "%s (%.2f) [%s] has a streak of %s%d"
+	return fmt.Sprintf(str, p.Ticker, p.Candle.Price, p.Source, status, p.Streak)
 }

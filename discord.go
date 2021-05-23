@@ -182,6 +182,8 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 	host, _ := os.Hostname()
 	if len(parts) == 1 {
 		switch parts[0] {
+		case "commands", "help":
+			cb.SendGeneralMessage(formatHelpText())
 		case "host":
 			cb.SendMessage(host, "", false)
 		case "atme":
