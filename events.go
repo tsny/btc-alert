@@ -36,17 +36,17 @@ func (i *interval) onCompleted(p *eps.Publisher, new, old float64) {
 	diff := new - i.beginPrice
 	percent := (diff / i.beginPrice) * 100
 	totalChange := sf("%s --> %s", utils.Fts(i.beginPrice), utils.Fts(new))
-	changes := sf("Chg: %s | Percent: %.3f%%", utils.Fts(diff), percent)
+	changes := sf("Chg: %s | Percent: %.2f%%", utils.Fts(diff), percent)
 	alert := sf("(%s) %d Min | %s | %s", p.Ticker, i.occurrences, totalChange, changes)
 
 	//todo: don't directly call discord
 	if math.Abs(percent) > i.PercentThreshold {
 		if conf.Discord.Enabled {
-			cryptoBot.SendMessage(alert, "everyone", false)
+			cryptoBot.SendGeneralMessage(alert)
 		}
 	} else {
 		if conf.Discord.Enabled && conf.Discord.MessageForEachIntervalUpdate {
-			cryptoBot.SendMessage(alert, "", false)
+			cryptoBot.SendGeneralMessage(alert)
 		}
 	}
 }
@@ -63,7 +63,7 @@ func (t *threshold) onThresholdReached(p *eps.Publisher, breachedUp bool, new, o
 
 	// utils.Banner("ALERT " + body)
 	if conf.Discord.Enabled {
-		cryptoBot.SendMessage(body, "", false)
+		cryptoBot.SendGeneralMessage(body)
 	}
 	t.beginPrice = new
 }

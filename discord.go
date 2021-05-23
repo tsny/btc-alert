@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"os"
 	"strconv"
 	"strings"
-	"time"
 
 	"btc-alert/priceTracking"
 
@@ -27,9 +27,11 @@ import (
 // CryptoBot is a service that communicates with discord and holds onto alerts
 // that are created for discord users
 type CryptoBot struct {
-	ds        *discordgo.Session
-	alerts    map[string]priceAlert
-	channelId string
+	ds            *discordgo.Session
+	alerts        map[string]priceAlert
+	channelId     string
+	enabled       bool
+	alertEveryone bool
 }
 
 type priceAlert struct {
@@ -62,6 +64,7 @@ func initBot(token string) *CryptoBot {
 	cb := &CryptoBot{ds: dg, channelId: conf.Discord.ChannelID}
 	dg.AddHandler(cb.OnNewMessage)
 	dg.AddHandler(cb.OnDisconnect)
+	cb.alertEveryone = conf.Discord.AlertEveryone
 	return cb
 }
 
@@ -91,7 +94,6 @@ func (cb *CryptoBot) SubscribeUserToPriceTarget(userID string, target float64, p
 // SubscribeToTicker adds a ticker to the general watchlist
 func (cb *CryptoBot) SubscribeToTicker(ticker string, p *eps.Publisher) {
 	_ = newListener(p, conf.Intervals, conf.Thresholds)
-	// PublisherMap[ticker] = p
 }
 
 // GetTopGainers outputs a table of the top gainers in the market today
@@ -113,6 +115,15 @@ func (cb *CryptoBot) GetTopGainers(gainers bool) {
 		return
 	}
 	cb.SendMessage(out, "", false)
+}
+
+// Sends a generalized message, used for alerts, 'ats' everyone if enabled
+func (cb *CryptoBot) SendGeneralMessage(str string) (*discordgo.Message, error) {
+	user := ""
+	if cb.alertEveryone {
+		user = "everyone"
+	}
+	return cb.SendMessage(str, user, false)
 }
 
 // SendMessage sends a discord message with an optional mention
@@ -159,6 +170,7 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 	if m.Author.ID == s.State.User.ID {
 		return
 	}
+
 	log.Infof("Processing msg '%s' from '%s'", m.Content, m.Author.Username)
 
 	msg := strings.TrimSpace(m.Content)
@@ -167,43 +179,28 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 	}
 	parts := strings.Split(msg[1:], " ")
 
-	// Testing funcs
-	if parts[0] == "atme" {
-		cb.SendMessage("test", m.Author.ID, false)
-		return
-	}
-
-	if parts[0] == "atall" {
-		cb.SendMessage("test", "everyone", false)
-		return
-	}
-
-	if parts[0] == "gainers" {
-		cb.GetTopGainers(true)
-		return
-	}
-	if parts[0] == "losers" {
-		cb.GetTopGainers(false)
-		return
-	}
-
-	if len(parts) < 2 {
+	host, _ := os.Hostname()
+	if len(parts) == 1 {
+		switch parts[0] {
+		case "host":
+			cb.SendMessage(host, "", false)
+		case "atme":
+			cb.SendMessage("test", m.Author.ID, false)
+		case "atall":
+			cb.SendMessage("test", "everyone", false)
+		case "gainers":
+			cb.GetTopGainers(true)
+		case "losers":
+			cb.GetTopGainers(false)
+		case "quiet":
+			cb.alertEveryone = !cb.alertEveryone
+			cb.SendGeneralMessage(fmt.Sprintf("%s alerting all: %v", host, cb.alertEveryone))
+		}
 		return
 	}
 
 	if parts[0] == "whois" {
-		t := parts[1]
-		println("Getting summary for " + t)
-		sum := yahoo.GetSummary(t)
-		if sum == "" {
-			println("Couldn't get summary for ticker " + t)
-			return
-		}
-		// Discord don't like mo than 2000 chars
-		if len(sum) > 2000 {
-			sum = sum[0:1999]
-		}
-		cb.SendMessage(sum, "", false)
+		cb.handleWhoIs(parts[1])
 		return
 	}
 
@@ -244,15 +241,7 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 	}
 
 	if operation == "get" {
-		// Small delay, todo: get rid
-		if pub.Candle == nil {
-			time.Sleep(2 * time.Second)
-		}
-		if pub.Candle == nil {
-			return
-		}
-		cb.SendMessage(pub.Candle.String(), "", false)
-		cb.SendMessage(pub.StreakSummary(), "", false)
+		cb.handleGet(pub)
 		return
 	}
 
@@ -282,4 +271,26 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 			cb.SendMessage("Couldn't find ticker "+ticker, "", false)
 		}
 	}
+}
+
+func (cb *CryptoBot) handleGet(pub *eps.Publisher) {
+	if pub.Candle == nil {
+		return
+	}
+	cb.SendMessage(pub.Candle.String(), "", false)
+	cb.SendMessage(pub.StreakSummary(), "", false)
+}
+
+func (cb *CryptoBot) handleWhoIs(ticker string) error {
+	println("Getting summary for " + ticker)
+	sum := yahoo.GetSummary(ticker)
+	if sum == "" {
+		return fmt.Errorf("Couldn't get summary for ticker " + ticker)
+	}
+	// Discord don't like mo than 2000 chars
+	if len(sum) > 2000 {
+		sum = sum[0:1999]
+	}
+	_, err := cb.SendMessage(sum, "", false)
+	return err
 }

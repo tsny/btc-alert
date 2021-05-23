@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"math"
 	"strings"
 	"time"
 )
@@ -28,7 +29,7 @@ func Bannerf(str string, args ...interface{}) {
 
 // Fts means float-to-string
 func Fts(in float64) string {
-	if in < 1 {
+	if math.Abs(in) < 1 {
 		return fmt.Sprintf("$%.4f", in)
 	} else {
 		return fmt.Sprintf("$%.2f", in)
