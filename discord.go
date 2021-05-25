@@ -240,6 +240,7 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 		str := "Subbed %s to %s price point %.4f -- Current: %.4f"
 		discordMessage := fmt.Sprintf(str, m.Author.Username, pub.Ticker, price, pub.GetPrice())
 		cb.SendMessage(discordMessage, "", false)
+		return
 	}
 
 	if operation == "get" {
@@ -253,6 +254,7 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 		str := "%s -- $%.2f -- Fee: $%.2f -- 2%% Gain: $%.2f ($%.2f)"
 		str = fmt.Sprintf(str, cdl.Ticker, cdl.Price, fee, fee*2, fee*2+cdl.Price)
 		cb.SendMessage(str, "", false)
+		return
 	}
 
 	if operation == "chart" || operation == "graph" {
@@ -277,9 +279,13 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 
 func (cb *CryptoBot) handleGet(pub *eps.Publisher) {
 	if pub.Candle == nil {
+		log.Warnf("!get for %s failed because candle was nil", pub.Ticker)
 		return
 	}
-	cb.SendMessage(pub.Candle.String(), "", false)
+	// TODO: this should give 1, 6, 12, 24 hr change?
+	str := fmt.Sprintf("```Ticker: %s\nSource: %s\nPrice: %v\nStreak: %v\n```",
+		pub.Ticker, pub.Source, pub.Candle.Price, pub.Streak)
+	cb.SendMessage(str, "", false)
 	cb.SendMessage(pub.StreakSummary(), "", false)
 }
 
