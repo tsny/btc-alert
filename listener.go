@@ -37,7 +37,7 @@ func (l *listener) onPriceUpdated(p *eps.Publisher, c eps.Candlestick) {
 	}
 	if p.Streak > conf.StreakAlert && conf.StreakAlert > 0 {
 		if conf.Discord.Enabled {
-			cryptoBot.SendMessage(p.StreakSummary(), "", false)
+			cryptoBot.SendGeneralMessage(p.StreakSummary())
 		}
 	}
 	go l.checkIntervals(p, c.Price, c.Previous)
@@ -45,8 +45,7 @@ func (l *listener) onPriceUpdated(p *eps.Publisher, c eps.Candlestick) {
 
 	s := c.String()
 	if c.Volatility() > conf.VolatilityAlert {
-		cryptoBot.SendMessage(s, "everyone", false)
-		s = s + " <-- ALERT"
+		cryptoBot.SendGeneralMessage(s)
 	}
 	log.Info(s)
 }

@@ -17,9 +17,9 @@ const (
 
 func (s *SecurityType) String() string {
 	switch *s {
-	case 1:
+	case 0:
 		return "Stock"
-	case 2:
+	case 1:
 		return "Crypto"
 	}
 	return "Unknown"

@@ -43,7 +43,14 @@ func NewPublisher(priceFetcher func(string) float64, ticker, source string, star
 }
 
 func (p *Publisher) String() string {
-	return fmt.Sprintf("%s [%s] - %d Updates - Active? [%v]", p.Ticker, p.Source, p.Updates, p.active)
+	var price float64
+	if p.Candle == nil {
+		price = p.GetPrice()
+	} else {
+		price = p.Candle.Price
+	}
+	s := "%s [%s] (%v) - %d Updates - Active? [%v]"
+	return fmt.Sprintf(s, p.Ticker, p.Source, price, p.Updates, p.active)
 }
 
 // SetActive sets the publishers state
@@ -67,7 +74,7 @@ func (p *Publisher) init() {
 				p.fetchAndUpdatePrice()
 				if firstRun {
 					curr := p.priceFetcher(p.Ticker)
-					s := "%s -- Price Publisher [%s] active -- Current: %.2f\n"
+					s := "%s Price Publisher [%s] active -- Current: %.2f\n"
 					log.Infof(s, p.Ticker, p.Source, curr)
 					firstRun = false
 				}
@@ -95,7 +102,6 @@ func (c Candlestick) Volatility() float64 {
 // the publisher has fetched and updated the price of the security
 // todo: maybe this should take in an interface rather than just a func
 func (p *Publisher) RegisterSubscriber(subscriber func(p *Publisher, c Candlestick)) {
-	log.Infof("%s Publisher has new subscriber\n", p.Ticker)
 	p.callbacks = append(p.callbacks, subscriber)
 }
 

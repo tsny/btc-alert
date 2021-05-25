@@ -8,11 +8,10 @@ import (
 	"strconv"
 	"strings"
 
-	"btc-alert/priceTracking"
-
 	log "github.com/sirupsen/logrus"
 	"github.com/wcharczuk/go-chart"
 
+	"btc-alert/coinbase"
 	"btc-alert/eps"
 	"btc-alert/yahoo"
 
@@ -30,7 +29,6 @@ type CryptoBot struct {
 	ds            *discordgo.Session
 	alerts        map[string]priceAlert
 	channelId     string
-	enabled       bool
 	alertEveryone bool
 }
 
@@ -119,6 +117,10 @@ func (cb *CryptoBot) GetTopGainers(gainers bool) {
 
 // Sends a generalized message, used for alerts, 'ats' everyone if enabled
 func (cb *CryptoBot) SendGeneralMessage(str string) (*discordgo.Message, error) {
+	return cb.SendMessage(str, "", false)
+}
+
+func (cb *CryptoBot) SendAlertableMessage(str string) (*discordgo.Message, error) {
 	user := ""
 	if cb.alertEveryone {
 		user = "everyone"
@@ -207,20 +209,26 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 	}
 
 	ticker := strings.ToUpper(parts[1])
-	sec, pub := lookupService.FindSecurityByNameOrTicker(ticker)
-	if sec == nil {
+	info := lookupService.FindSecurityByNameOrTicker(ticker)
+	if info == nil {
 		log.Warnf("couldn't find publisher for %s", ticker)
-		if deets := yahoo.GetDetails(ticker); deets != nil && deets.ShortName != "" {
+		crypto := coinbase.GetPrice(ticker + "-USD")
+		if crypto > 0 {
+			sec := eps.NewCrypto(ticker, ticker+"-USD", "Coinbase")
+			pub := eps.NewPublisher(coinbase.GetPrice, ticker+"-USD", "Coinbase", true, 30)
+			info = trackSecurity(pub, sec)
+		} else if deets := yahoo.GetDetails(ticker); deets != nil && deets.ShortName != "" {
 			// Make a new publisher on the fly if we're not already tracking it
 			sec := eps.NewStock(deets.ShortName, ticker, "Yahoo")
-			pub = eps.NewPublisher(yahoo.GetPrice, ticker, "Yahoo", true, 30)
+			pub := eps.NewPublisher(yahoo.GetPrice, ticker, "Yahoo", true, 30)
 			pub.UseMarketHours = true
-			lookupService.Register(sec, pub)
+			info = trackSecurity(pub, sec)
 		} else {
 			cb.SendMessage("Could not find details for ticker "+ticker, "", false)
 			return
 		}
 	}
+	pub := info.Publisher
 
 	// Todo: make this a case and extract to funcs
 	operation := parts[0]
@@ -258,28 +266,25 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 	}
 
 	if operation == "chart" || operation == "graph" {
-		if queue := queueService.FindByTicker(ticker); queue != nil {
-			graph := priceTracking.QueueToGraph(*queue)
-			buffer := bytes.NewBuffer([]byte{})
-			err := graph.Render(chart.PNG, buffer)
-			if err != nil {
-				println(err)
-				return
-			}
-			file := &discordgo.File{Name: ticker + ".png", Reader: buffer}
-			msg := &discordgo.MessageSend{
-				Files: []*discordgo.File{file},
-			}
-			cb.ds.ChannelMessageSendComplex(cb.channelId, msg)
-		} else {
-			cb.SendMessage("Couldn't find ticker "+ticker, "", false)
+		graph := eps.QueueToGraph(*info.Queue)
+		buffer := bytes.NewBuffer([]byte{})
+		err := graph.Render(chart.PNG, buffer)
+		if err != nil {
+			println(err)
+			return
 		}
+		file := &discordgo.File{Name: ticker + ".png", Reader: buffer}
+		msg := &discordgo.MessageSend{
+			Files: []*discordgo.File{file},
+		}
+		cb.ds.ChannelMessageSendComplex(cb.channelId, msg)
 	}
 }
 
 func (cb *CryptoBot) handleGet(pub *eps.Publisher) {
 	if pub.Candle == nil {
 		log.Warnf("!get for %s failed because candle was nil", pub.Ticker)
+		cb.SendGeneralMessage(pub.String())
 		return
 	}
 	// TODO: this should give 1, 6, 12, 24 hr change?

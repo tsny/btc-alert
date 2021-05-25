@@ -8,40 +8,46 @@ import (
 )
 
 type Service struct {
-	inner map[*Security]*Publisher
+	inner map[*Security]*InfoBall
 	mutex *sync.Mutex
 }
 
+type InfoBall struct {
+	Publisher *Publisher
+	Queue     *CandleQueue
+}
+
 func NewSecurityLookup() *Service {
-	return &Service{make(map[*Security]*Publisher), &sync.Mutex{}}
+	return &Service{make(map[*Security]*InfoBall), &sync.Mutex{}}
 }
 
-func (s *Service) Register(sec *Security, pub *Publisher) bool {
-	found, _ := s.FindSecurityByNameOrTicker(sec.Name)
+func (s *Service) Register(sec *Security, pub *Publisher, queue *CandleQueue) *InfoBall {
+	found := s.FindSecurityByNameOrTicker(sec.Name)
 	if found != nil {
-		return false
+		return nil
 	}
+	info := &InfoBall{pub, queue}
 	s.mutex.Lock()
-	s.inner[sec] = pub
+	s.inner[sec] = info
 	s.mutex.Unlock()
-	log.Infof("Tracking security %s [%s] - [%s]", sec.Name, sec.Source, sec.Type.String())
-	return true
+	log.Infof("Tracking security %s [%s] (%s) - [%s]", sec.Name, sec.Source, sec.Ticker, sec.Type.String())
+	return info
 }
 
-func (s *Service) FindSecurityByNameOrTicker(name string) (*Security, *Publisher) {
+func (s *Service) FindSecurityByNameOrTicker(name string) *InfoBall {
 	name = strings.ToLower(name)
 	for k, v := range s.inner {
 		if name == strings.ToLower(k.Name) || name == strings.ToLower(k.Ticker) {
-			return k, v
+			return v
 		}
 		// look thru additional names
 		for _, addl := range k.AdditionalNames {
 			if name == strings.ToLower(addl) {
-				return k, v
+				return v
 			}
 		}
 	}
-	return nil, nil
+	return nil
 }
 
 func (s *Service) FindSecurityByTicker(ticker string) *Security {

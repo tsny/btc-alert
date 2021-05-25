@@ -42,11 +42,11 @@ func (i *interval) onCompleted(p *eps.Publisher, new, old float64) {
 	//todo: don't directly call discord
 	if math.Abs(percent) > i.PercentThreshold {
 		if conf.Discord.Enabled {
-			cryptoBot.SendGeneralMessage(alert)
+			cryptoBot.SendAlertableMessage(alert)
 		}
 	} else {
 		if conf.Discord.Enabled && conf.Discord.MessageForEachIntervalUpdate {
-			cryptoBot.SendGeneralMessage(alert)
+			cryptoBot.SendAlertableMessage(alert)
 		}
 	}
 }
@@ -63,7 +63,7 @@ func (t *threshold) onThresholdReached(p *eps.Publisher, breachedUp bool, new, o
 
 	// utils.Banner("ALERT " + body)
 	if conf.Discord.Enabled {
-		cryptoBot.SendGeneralMessage(body)
+		cryptoBot.SendAlertableMessage(body)
 	}
 	t.beginPrice = new
 }

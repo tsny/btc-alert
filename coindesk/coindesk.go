@@ -9,6 +9,7 @@ import (
 )
 
 // URL = Coindesk API - Current Price endpoint
+// From this URL, we really only can get BTC
 const URL = "https://api.coindesk.com/v1/bpi/currentprice.json"
 
 type Result struct {

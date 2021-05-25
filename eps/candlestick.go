@@ -8,6 +8,7 @@ import (
 )
 
 // Candlestick represents a 'tick' or duration of a security's price
+// This project is primarily concerned with minute candles
 // https://en.wikipedia.org/wiki/Candlestick_chart
 type Candlestick struct {
 	Ticker            string

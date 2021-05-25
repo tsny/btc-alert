@@ -1,4 +1,4 @@
-package priceTracking
+package eps
 
 import (
 	"fmt"
