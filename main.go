@@ -45,6 +45,7 @@ func main() {
 		log.Infof("Defaulting to port %s", port)
 	}
 
+	trackGainers()
 	log.Infof("Listening on port %s", port)
 	log.Fatal(http.ListenAndServe(":"+port, initRoutes()))
 }
@@ -55,4 +56,23 @@ func trackSecurity(pub *eps.Publisher, sec *eps.Security) *eps.InfoBall {
 	info := lookupService.Register(sec, pub, queue)
 	pub.SetActive(true)
 	return info
+}
+
+// Finds the top gainers today from Yahoo and follows them
+func trackGainers() {
+	if !eps.IsMarketHours() {
+		log.Warn("ignoring call to trackGainers as it is not market hours")
+		return
+	}
+	gainers := yahoo.GetGainers()
+	for _, v := range gainers {
+		if info := lookupService.FindSecurityByNameOrTicker(v); info == nil {
+			if deets := yahoo.GetDetails(v); deets != nil && deets.ShortName != "" {
+				sec := eps.NewStock(deets.ShortName, v, "Yahoo")
+				pub := eps.NewPublisher(yahoo.GetPrice, v, "Yahoo", true, 30)
+				pub.UseMarketHours = true
+				go trackSecurity(pub, sec)
+			}
+		}
+	}
 }

@@ -1,17 +1,20 @@
 package yahoo
 
 import (
-	"strings"
 	"testing"
 )
 
-func Test_GetTopGainersTickers(t *testing.T) {
-	arr := GetTopMoversTickers(true)
-	println(strings.Join(arr, " | "))
-	arr = GetTopMoversTickers(false)
-	println(strings.Join(arr, " | "))
+func Test_GetSummary(t *testing.T) {
+	sum := GetSummary("MSFT")
+	if sum == "" {
+		t.Fatal("summary was empty")
+	}
 }
 
-func Test_GetSummary(t *testing.T) {
-	println(GetSummary("MSFT"))
+func TestGetGainers(t *testing.T) {
+	arr := GetGainers()
+	if len(arr) == 0 {
+		t.Fatal("got no gainers")
+	}
+	t.Logf("%v", arr)
 }

@@ -6,7 +6,6 @@ type CandleQueue struct {
 	Oldest Candlestick
 	Newest Candlestick
 	inner  []Candlestick
-	cap    int
 }
 
 func NewQueue() *CandleQueue {
@@ -37,22 +36,11 @@ func (q *CandleQueue) GetAllPrices() []float64 {
 func (q *CandleQueue) Add(c Candlestick) {
 	// todo: make this better than just truncating
 	// this is actually backwards right now which looks fine in graphs
-	if len(q.inner) > q.cap {
+	if len(q.inner) > capLimit {
 		q.inner = q.inner[:capLimit-1]
 	}
 	q.inner = append(q.inner, c)
 	q.Newest = c
-}
-
-func (q *CandleQueue) GetCap() int {
-	return q.cap
-}
-
-func (q *CandleQueue) SetCap(cap int) {
-	if cap > capLimit {
-		cap = capLimit
-	}
-	q.cap = cap
 }
 
 func (q *CandleQueue) GetQueue() []Candlestick {

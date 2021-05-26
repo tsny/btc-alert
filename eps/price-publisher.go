@@ -66,7 +66,7 @@ func (p *Publisher) init() {
 		p.active = true
 		for {
 			// Disable self if past market hours
-			if p.UseMarketHours && !isMarketHours() && p.active {
+			if p.UseMarketHours && !IsMarketHours() && p.active {
 				log.Warnf("%s disabled as it is not market hours", p.Ticker)
 				p.active = false
 			}
@@ -85,7 +85,7 @@ func (p *Publisher) init() {
 }
 
 // Regular US stock market trading hours are 9:30 AM -> 4 PM
-func isMarketHours() bool {
+func IsMarketHours() bool {
 	nyse, _ := time.LoadLocation("America/New_York")
 	now := time.Now().In(nyse)
 	hour := now.Hour()

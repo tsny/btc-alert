@@ -83,6 +83,18 @@ func GetTopMoversTickers(gainers bool) []string {
 	return tickers
 }
 
+func GetGainers() []string {
+	doc := getData(gainersURL)
+	var arr []string
+	doc.Find("[data-test='quoteLink']").Each(func(i int, ele *goquery.Selection) {
+		arr = append(arr, ele.Text())
+	})
+	if len(arr) > 10 {
+		arr = arr[:9]
+	}
+	return arr
+}
+
 // GetTopMoversAsArray returns the top gainers of the day as a nested array
 // Useful for putting into a table
 func GetTopMoversAsArray(gainers bool) [][]string {

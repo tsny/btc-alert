@@ -290,8 +290,7 @@ func (cb *CryptoBot) handleGet(pub *eps.Publisher) {
 	// TODO: this should give 1, 6, 12, 24 hr change?
 	str := fmt.Sprintf("```Ticker: %s\nSource: %s\nPrice: %v\nStreak: %v\n```",
 		pub.Ticker, pub.Source, pub.Candle.Price, pub.Streak)
-	cb.SendMessage(str, "", false)
-	cb.SendMessage(pub.StreakSummary(), "", false)
+	cb.SendGeneralMessage(str)
 }
 
 func (cb *CryptoBot) handleWhoIs(ticker string) error {
