@@ -59,3 +59,11 @@ func (s *Service) FindSecurityByTicker(ticker string) *Security {
 	}
 	return nil
 }
+
+func (s *Service) GetAllTracked() []*InfoBall {
+	var arr []*InfoBall
+	for _, v := range s.inner {
+		arr = append(arr, v)
+	}
+	return arr
+}

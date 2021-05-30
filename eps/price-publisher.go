@@ -85,12 +85,16 @@ func (p *Publisher) init() {
 }
 
 // Regular US stock market trading hours are 9:30 AM -> 4 PM
+// TODO: Fix for 4->4:30, rn we just check for 9 to 4
 func IsMarketHours() bool {
 	nyse, _ := time.LoadLocation("America/New_York")
 	now := time.Now().In(nyse)
+	if day := now.Weekday().String(); day == "Sunday" || day == "Saturday" {
+		return false
+	}
 	hour := now.Hour()
-	min := now.Minute()
-	return hour < 16 && (hour > 9 && min >= 30)
+	// min := now.Minute()
+	return hour < 16 && hour > 9
 }
 
 // Volatility returns the percent difference between the high/low and close

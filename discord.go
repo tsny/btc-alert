@@ -199,6 +199,12 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 		case "quiet":
 			cb.alertEveryone = !cb.alertEveryone
 			cb.SendGeneralMessage(fmt.Sprintf("%s alerting all: %v", host, cb.alertEveryone))
+		case "all":
+			var arr []string
+			for _, v := range lookupService.GetAllTracked() {
+				arr = append(arr, v.Publisher.String())
+			}
+			cb.SendGeneralMessage(strings.Join(arr, "\n"))
 		}
 		return
 	}
@@ -248,6 +254,12 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 		str := "Subbed %s to %s price point %.4f -- Current: %.4f"
 		discordMessage := fmt.Sprintf(str, m.Author.Username, pub.Ticker, price, pub.GetPrice())
 		cb.SendMessage(discordMessage, "", false)
+		return
+	}
+
+	if operation == "disable" {
+		pub.SetActive(false)
+		cb.SendGeneralMessage("Disabling price tracker for " + pub.Ticker)
 		return
 	}
 

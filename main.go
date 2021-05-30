@@ -28,13 +28,13 @@ func main() {
 			pub := eps.NewPublisher(yahoo.GetPrice, ticker, "Yahoo", false, 30)
 			pub.UseMarketHours = true
 			name := yahoo.GetDetails(ticker).ShortName
-			sec := eps.NewStock(name, ticker, "Coinbase")
+			sec := eps.NewStock(name, ticker, "Yahoo")
 			go trackSecurity(pub, sec)
 		}(ticker)
 	}
 
 	// DOGE
-	pub := eps.NewPublisher(binance.GetPrice, "DOGEUSDT", "Yahoo", false, 30)
+	pub := eps.NewPublisher(binance.GetPrice, "DOGEUSDT", "Binance", false, 30)
 	sec := eps.NewCrypto("DOGE", "DOGEUSDT", "Yahoo", "DOGE", "DOGECOIN")
 	go trackSecurity(pub, sec)
 

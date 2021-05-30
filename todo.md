@@ -1,6 +1,7 @@
 - [ ] Add beginTime -> endTime in movement alerts for like $1000
 
 - [ ] Save queues into csv so they can be reloaded
+    Is this one really necessary?
 
 - [x] Streaks should be tracked both directions and mention the current price and percentage change
 
@@ -18,6 +19,4 @@
 
 - [ ] Price alerts shouldd be continous not in chunks. I.E, 5 minute intervals should overlap, but maybe we avoid alerts if the interval has already alerted recently unless the next interval is higher than the last like if it goes from 3% to 3.5%
 
-## Scratch
-
-Config file should have different event descriptions for each currency instead of 3 generic ones
+- [ ] Have timed job that refreshes the movers watchlist on weekday mornings

@@ -19,14 +19,27 @@ func initRoutes() *mux.Router {
 	r.HandleFunc("/symbol/{symbol}/graph", getGraph).Methods("GET")
 	r.HandleFunc("/symbol/{symbol}/prices", getRecentPrices).Methods("GET")
 	r.HandleFunc("/symbol/{symbol}/details", getStockDetails).Methods("GET")
-	r.HandleFunc("/movers", getTopMovers).Methods("GET")
-	// r.HandleFunc("/watchlist", getWatchlist).Methods("GET")
+	r.HandleFunc("/gainers", getLosers).Methods("GET")
+	r.HandleFunc("/losers", getGainers).Methods("GET")
+	r.HandleFunc("/all", getAll).Methods("GET")
 	// r.HandleFunc("/watchlist", postRefreshWatchlist).Methods("POST")
 	return r
 }
 
-func getTopMovers(w http.ResponseWriter, r *http.Request) {
+func getAll(w http.ResponseWriter, r *http.Request) {
+	var arr []*eps.Publisher
+	for _, v := range lookupService.GetAllTracked() {
+		arr = append(arr, v.Publisher)
+	}
+	sendJSON(w, arr)
+}
+
+func getGainers(w http.ResponseWriter, r *http.Request) {
 	sendJSON(w, yahoo.GetTopMoversAsArray(true))
+}
+
+func getLosers(w http.ResponseWriter, r *http.Request) {
+	sendJSON(w, yahoo.GetTopMoversAsArray(false))
 }
 
 func getSymbol(w http.ResponseWriter, r *http.Request) {
