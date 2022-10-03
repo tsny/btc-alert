@@ -1,3 +1,7 @@
+## Note
+
+Not actively maintained and somewhat of a beginner project! 
+
 ## Usage
 
 `go get github.com/tsny/btc-alert`
