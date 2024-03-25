@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"math"
+	"os"
 	"strings"
 	"time"
 )
@@ -49,4 +50,33 @@ func GetEmoji(curr, prev float64) string {
 // GetTime gets the current time as string for logs
 func GetTime() string {
 	return time.Now().Format(TimestampFormat)
+}
+
+func Getenv(key, fallback string) string {
+	val := os.Getenv(key)
+	if val == "" {
+		val = fallback
+	}
+	return val
+}
+
+func EnsureEnv(key string) string {
+	val := os.Getenv(key)
+	if val == "" {
+		panic(key + " - env var missing")
+	}
+	return val
+}
+
+// Regular US stock market trading hours are 9:30 AM -> 4 PM
+// TODO: Fix for 4->4:30, rn we just check for 9 to 4
+func IsMarketHours() bool {
+	nyse, _ := time.LoadLocation("America/New_York")
+	now := time.Now().In(nyse)
+	if day := now.Weekday().String(); day == "Sunday" || day == "Saturday" {
+		return false
+	}
+	hour := now.Hour()
+	// min := now.Minute()
+	return hour < 16 && hour > 9
 }

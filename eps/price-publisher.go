@@ -2,55 +2,75 @@
 package eps
 
 import (
+	"btc-alert/utils"
 	"fmt"
-	"math"
+	"strings"
 	"time"
 
+	"github.com/blend/go-sdk/uuid"
+	"github.com/samber/lo"
 	log "github.com/sirupsen/logrus"
 )
 
 // Publisher periodically grabs data from its URL
 // and sends out updates with the price it gets back
 type Publisher struct {
-	Ticker          string
-	Source          string // Yahoo, Binance, etc
-	UseMarketHours  bool   // whether the security abides by exchange market hours (NYSE, etc)
-	Candle          *Candlestick
-	PreviousCandle  *Candlestick
-	Streak          int // How many times in a row the candlestick moved in a certain direction
-	PositiveStreak  bool
-	Updates         int                             // How many times the publisher has fetched a new price
-	callbacks       []func(*Publisher, Candlestick) // callbacks upon price update
-	closedCallbacks []func(*Publisher, Candlestick) // callbacks upon candlestick closed
-	streakCallbacks []func(*Publisher, Candlestick, int)
-	active          bool
-	sleepDuration   int
-	priceFetcher    func(string) float64
+	Ticker         string
+	Source         string // Yahoo, Binance, etc
+	UseMarketHours bool   // whether the security abides by exchange market hours (NYSE, etc)
+	Candle         *Candlestick
+	PreviousCandle *Candlestick
+	Streak         int // How many times in a row the candlestick moved in a certain direction
+	PositiveStreak bool
+	Updates        int // How many times the publisher has fetched a new price
+	Listeners      map[string]UpdateHandler
+	active         bool
+	refreshDur     time.Duration
+	candleDur      time.Duration
+	priceFetcher   func(string) float64
 }
 
+type UpdateHandler func(*Publisher, *Candlestick, bool)
+
 // NewPublisher is a constructor
-func NewPublisher(priceFetcher func(string) float64, ticker, source string, start bool, sleepDur int) *Publisher {
-	p := &Publisher{
-		Source:        source,
-		Ticker:        ticker,
-		callbacks:     []func(p *Publisher, c Candlestick){},
-		sleepDuration: sleepDur,
-		priceFetcher:  priceFetcher,
-		active:        start,
+func NewPublisher(priceFetcher func(string) float64, ticker, source string, start bool, candleDurSeconds int, refreshSeconds int) *Publisher {
+	if candleDurSeconds < 0 {
+		candleDurSeconds = 60
 	}
+	if refreshSeconds < 0 {
+		refreshSeconds = 15
+	}
+	p := &Publisher{
+		Source:       source,
+		Ticker:       strings.ToLower(ticker),
+		refreshDur:   time.Duration(refreshSeconds) * time.Second,
+		candleDur:    time.Duration(candleDurSeconds) * time.Second,
+		priceFetcher: priceFetcher,
+		active:       start,
+		Listeners:    make(map[string]UpdateHandler),
+	}
+	log.Infof("Publisher %v: %v %v", p.Ticker, p.refreshDur, p.candleDur)
 	p.init()
 	return p
 }
 
 func (p *Publisher) String() string {
-	var price float64
+	candleString := ""
 	if p.Candle == nil {
-		price = p.GetPrice()
+		candleString = "no candle yet"
 	} else {
-		price = p.Candle.Price
+		candleString = p.Candle.String()
 	}
-	s := "%s [%s] (%v) - %d Updates - Active? [%v]"
-	return fmt.Sprintf(s, p.Ticker, p.Source, price, p.Updates, p.active)
+	s := "%v [%v] (%v) - %d Updates - Active? [%v]"
+	return fmt.Sprintf(s, p.Ticker, p.Source, candleString, p.Updates, p.active)
+}
+
+func (p *Publisher) Unsub(id string) bool {
+	if lo.Contains(lo.Keys(p.Listeners), id) {
+		delete(p.Listeners, id)
+		return true
+	}
+	return false
 }
 
 // SetActive sets the publishers state
@@ -61,95 +81,83 @@ func (p *Publisher) SetActive(state bool) {
 
 // StartProducing loops and updates the price from the chosen exchange
 func (p *Publisher) init() {
-	firstRun := true
 	go func() {
 		p.active = true
 		for {
 			// Disable self if past market hours
-			if p.UseMarketHours && !IsMarketHours() && p.active {
+			if p.UseMarketHours && !utils.IsMarketHours() && p.active {
 				log.Warnf("%s disabled as it is not market hours", p.Ticker)
 				p.active = false
 			}
 			if p.active {
 				p.fetchAndUpdatePrice()
-				if firstRun {
-					curr := p.priceFetcher(p.Ticker)
-					s := "%s Price Publisher [%s] active -- Current: %.2f\n"
-					log.Infof(s, p.Ticker, p.Source, curr)
-					firstRun = false
-				}
 			}
-			time.Sleep(time.Duration(p.sleepDuration) * time.Second)
+			// log.Infof("%v: Next update: %v", p.Ticker, time.Now().Local().Add(p.refreshDur))
+			log.Infof("%v: update %v => %v", p.Ticker, fdate(p.Candle.Start), fdate(time.Now().Local().Add(p.refreshDur)))
+			time.Sleep(p.refreshDur)
 		}
 	}()
 }
 
-// Regular US stock market trading hours are 9:30 AM -> 4 PM
-// TODO: Fix for 4->4:30, rn we just check for 9 to 4
-func IsMarketHours() bool {
-	nyse, _ := time.LoadLocation("America/New_York")
-	now := time.Now().In(nyse)
-	if day := now.Weekday().String(); day == "Sunday" || day == "Saturday" {
-		return false
-	}
-	hour := now.Hour()
-	// min := now.Minute()
-	return hour < 16 && hour > 9
+func fdate(t time.Time) string {
+	return t.Format(time.DateTime)
 }
 
-// Volatility returns the percent difference between the high/low and close
-func (c Candlestick) Volatility() float64 {
-	return (math.Abs(c.High-c.Low) / c.Close) * 100
+func (p *Publisher) RegisterPriceUpdateListener(s UpdateHandler) string {
+	handlerID := uuid.V4().String()
+	p.Listeners[handlerID] = s
+	return handlerID
 }
 
-// RegisterSubscriber assigns the func passed in to be called whenever
-// the publisher has fetched and updated the price of the security
-// todo: maybe this should take in an interface rather than just a func
-func (p *Publisher) RegisterSubscriber(subscriber func(p *Publisher, c Candlestick)) {
-	p.callbacks = append(p.callbacks, subscriber)
-}
-
-func (p *Publisher) onPriceUpdated() {
+func (p *Publisher) onPriceUpdated(completed bool) {
 	p.Updates++
-	for _, c := range p.callbacks {
-		go c(p, *p.Candle)
-	}
-	if p.Candle.Complete {
-		for _, c := range p.closedCallbacks {
-			go c(p, *p.Candle)
-		}
+	for _, c := range p.Listeners {
+		go c(p, p.Candle, completed)
 	}
 }
 
-// GetPrice returns the current price of the configured ticker
-func (p *Publisher) GetPrice() float64 {
+// Price returns the current price of the configured ticker
+func (p *Publisher) Price() float64 {
 	if p.Candle == nil {
 		return p.priceFetcher(p.Ticker)
 	}
 	return p.Candle.Price
 }
 
-func (p *Publisher) fetchAndUpdatePrice() {
+func (p *Publisher) fetchAndUpdatePrice() bool {
 	newPrice := p.priceFetcher(p.Ticker)
 	// Ignore <= 0 since the API probably failed
 	if newPrice <= 0 {
-		log.Warnf("%s's price for %s was <= 0 \n", p.Source, p.Ticker)
-		return
+		log.Errorf("%s's price for %s was <= 0", p.Source, p.Ticker)
+		return false
 	}
 	if p.Candle == nil {
-		p.Candle = NewCandlestick(newPrice, p.sleepDuration, p.Ticker, p.Source)
+		p.newCandlestick(newPrice)
+		return false
 	}
-	candleDone := p.Candle.Update(newPrice)
-	p.onPriceUpdated()
+	p.Candle.Update(newPrice)
+	candleDone := p.Candle.Start.Add(p.candleDur).Before(time.Now().Local())
 	if candleDone {
-		p.checkStreak()
-		p.PreviousCandle = p.Candle
-		p.Candle = NewCandlestick(newPrice, p.sleepDuration, p.Ticker, p.Source)
+		p.newCandlestick(newPrice)
 	}
+	p.onPriceUpdated(candleDone)
+	return candleDone
+}
+
+func (p *Publisher) newCandlestick(price float64) {
+	p.checkStreak()
+	p.PreviousCandle = p.Candle
+	if p.PreviousCandle != nil {
+		p.PreviousCandle.Finish()
+	}
+	p.Candle = NewCandlestick(price)
 }
 
 // Checks whether a security is streaking in either direction
 func (p *Publisher) checkStreak() {
+	if p.Candle == nil {
+		return
+	}
 	// If there is no streak, begin it
 	if p.Streak == 0 {
 		p.Streak++

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -29,27 +28,14 @@ type OneDayCandle struct {
 	Volume30Day string `json:"volume_30day"`
 }
 
-// CryptoMap is a map of the Coin's simple name to its ticker
-var CryptoMap = []*eps.Security{
-	{Name: "Bitcoin", Ticker: "BTC-USD"},
-	{Name: "Bitcoin Cash", Ticker: "BCH-USD"},
-	{Name: "DASH", Ticker: "DASH-USD"},
-	{Name: "Ethereum", Ticker: "ETH-USD"},
-	{Name: "EOS", Ticker: "EOS-USD"},
-	{Name: "Ethereum Classic", Ticker: "ETC-USD"},
-	{Name: "ZEC", Ticker: "ZEC-USD"},
-	{Name: "Maker", Ticker: "MKR-USD"},
-	{Name: "XLM", Ticker: "XLM-USD"},
-	{Name: "ATOM", Ticker: "ATOM-USD"},
-	{Name: "Lite Coin", Ticker: "LTC-USD"},
-}
+const (
+	BTC = "BTC-USD"
+	ETH = "ETH-USD"
+)
 
-func init() {
-	for _, c := range CryptoMap {
-		c.AdditionalNames = append(c.AdditionalNames, strings.ReplaceAll(c.Ticker, "-USD", ""))
-		c.Type = eps.Crypto
-		c.Source = "Coinbase"
-	}
+// CryptoMap is a map of the Coin's simple name to its ticker
+var CryptoMap = map[string]*eps.Security{
+	BTC: {Name: "BTC", Type: eps.Crypto},
 }
 
 // TickerURL is the Coinbase Ticker API URL
@@ -87,15 +73,16 @@ func GetPrice(ticker string) float64 {
 
 // Get24Hour returns a 24 hour candlestick for a ticker
 func Get24Hour(ticker string) *OneDayCandle {
-	res, err := http.Get(fmt.Sprintf(DailyURL, ticker))
+	url := fmt.Sprintf(DailyURL, ticker)
+	println(url)
+	res, err := http.Get(url)
 	if err != nil {
 		println(err)
 		return nil
 	}
 	var out OneDayCandle
 	d := json.NewDecoder(res.Body)
-	d.Decode(&out)
-	if err != nil {
+	if err = d.Decode(&out); err != nil {
 		return nil
 	}
 	return &out

@@ -7,6 +7,8 @@ import (
 
 	"btc-alert/eps"
 	"btc-alert/utils"
+
+	"github.com/sirupsen/logrus"
 )
 
 var sf = fmt.Sprintf
@@ -32,6 +34,11 @@ type interval struct {
 	startTime        time.Time
 }
 
+type PercentChange struct {
+	DurInMinutes  int `json:"dur"`
+	PercentChange int `json:"percentChange"`
+}
+
 func (i *interval) onCompleted(p *eps.Publisher, new, old float64) {
 	diff := new - i.beginPrice
 	percent := (diff / i.beginPrice) * 100
@@ -44,10 +51,12 @@ func (i *interval) onCompleted(p *eps.Publisher, new, old float64) {
 		if conf.Discord.Enabled {
 			cryptoBot.SendAlertableMessage(alert)
 		}
+		logrus.Infof(alert)
 	} else {
 		if conf.Discord.Enabled && conf.Discord.MessageForEachIntervalUpdate {
 			cryptoBot.SendAlertableMessage(alert)
 		}
+		logrus.Infof(alert)
 	}
 }
 
