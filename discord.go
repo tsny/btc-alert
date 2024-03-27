@@ -134,34 +134,6 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 	}
 }
 
-// SubscribeUserToPriceTarget alerts a user when a security hits a specific price target
-// relative to the price the security was at when the user first subscribed
-func (cb *CryptoBot) SubscribeUserToPriceTarget(userID string, target float64, p *eps.Publisher) {
-	startedBelow := p.Price() < target
-	x := priceAlert{userID, p, target, p.Candle.Price, true, startedBelow}
-	str := "Subbing %s to %s price point %.4f | Current: %.4f\n"
-	log.Infof(str, userID, p.Ticker, target, p.Price())
-	f := func(p *eps.Publisher, candle *eps.Candlestick, completed bool) {
-		if !x.active {
-			return
-		}
-		str := fmt.Sprintf("%s Price Target %.4f Reached", p.Ticker, target)
-		if startedBelow && candle.Price > target {
-			cb.SendMessage(str, userID)
-			x.active = false
-		} else if !startedBelow && candle.Price < target {
-			cb.SendMessage(str, userID)
-			x.active = false
-		}
-	}
-	p.RegisterPriceUpdateListener(f)
-}
-
-// SubscribeToTicker adds a ticker to the general watchlist
-func (cb *CryptoBot) SubscribeToTicker(ticker string, p *eps.Publisher) {
-	// _ = newListener(p, conf.Intervals, conf.Thresholds)
-}
-
 // Sends a generalized message, used for alerts, 'ats' everyone if enabled
 func (cb *CryptoBot) SendGeneralMessage(str string) (*discordgo.Message, error) {
 	return cb.SendMessage(str, "")
