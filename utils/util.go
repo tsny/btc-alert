@@ -80,3 +80,15 @@ func IsMarketHours() bool {
 	// min := now.Minute()
 	return hour < 16 && hour > 9
 }
+
+func Fdate(t time.Time) string {
+	return t.Format(time.DateTime)
+}
+
+func Ftime(t time.Time) string {
+	return t.Format(time.TimeOnly)
+}
+
+func CompareTimes(t, t2 time.Time) string {
+	return fmt.Sprintf("%v => %v", Ftime(t), Ftime(t2))
+}

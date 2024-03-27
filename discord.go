@@ -5,15 +5,12 @@ import (
 	"io"
 	"strconv"
 	"strings"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 
 	"btc-alert/eps"
-	"btc-alert/yahoo"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/olekukonko/tablewriter"
 )
 
 // TODO: We should have crypto bot subscribe to events rather than the
@@ -25,7 +22,6 @@ import (
 type CryptoBot struct {
 	session         *discordgo.Session
 	serverChannelID string
-	alertEveryone   bool
 }
 
 type priceAlert struct {
@@ -57,33 +53,6 @@ func initBot(token string) *CryptoBot {
 	log.Infof("Connected to Discord server")
 	cb := &CryptoBot{session: session, serverChannelID: conf.Discord.ChannelID}
 	session.AddHandler(cb.OnNewMessage)
-	cb.alertEveryone = conf.Discord.AlertEveryone
-
-	for _, v := range conf.PercentageChanges {
-		println(v.PercentChange)
-	}
-
-	go func() {
-		userID := conf.Discord.UsersToNotify[0]
-		channel, err := session.UserChannelCreate(userID)
-		if err != nil {
-			panic(err)
-		}
-
-		for {
-			pub, ok := findPublisher("btc")
-			if !ok {
-				return
-			}
-			candle := *pub.Candle
-			time.Sleep(time.Hour * 6)
-			_, err = session.ChannelMessageSend(channel.ID, pub.Candle.Diff(&candle))
-			if err != nil {
-				panic(err)
-			}
-		}
-	}()
-
 	return cb
 }
 
@@ -180,43 +149,15 @@ func (cb *CryptoBot) SubscribeToTicker(ticker string, p *eps.Publisher) {
 	// _ = newListener(p, conf.Intervals, conf.Thresholds)
 }
 
-// GetTopGainers outputs a table of the top gainers in the market today
-func (cb *CryptoBot) GetTopGainers(gainers bool) {
-	str := &strings.Builder{}
-	data := yahoo.GetTopMoversAsArray(gainers)
-	// Have to truncate, too many chars for a message
-	data = data[0:10]
-	table := tablewriter.NewWriter(str)
-	table.SetHeader(yahoo.GetTableHeader())
-	table.AppendBulk(data)
-	table.SetCenterSeparator("")
-	table.SetBorder(false)
-	table.SetHeaderLine(false)
-	table.Render()
-	out := "```" + str.String() + "```"
-	println("size of table " + strconv.Itoa(len(out)))
-	if len(out) > 2000 {
-		return
-	}
-	cb.SendMessage(out, "")
-}
-
 // Sends a generalized message, used for alerts, 'ats' everyone if enabled
 func (cb *CryptoBot) SendGeneralMessage(str string) (*discordgo.Message, error) {
 	return cb.SendMessage(str, "")
 }
 
-func (cb *CryptoBot) SendAlertableMessage(str string) (*discordgo.Message, error) {
-	user := ""
-	if cb.alertEveryone {
-		user = "everyone"
-	}
-	return cb.SendMessage(str, user)
-}
-
 // SendMessage sends a discord message with an optional mention
 // TODO: Could change these into options for UserID and TTS
 func (cb *CryptoBot) SendMessage(str string, userID string) (*discordgo.Message, error) {
+	log.Infof("Sending message to %v", userID)
 	channel, err := cb.session.UserChannelCreate(userID)
 	if err != nil {
 		log.Errorf("err creating user channel for %v: %v", userID, err)

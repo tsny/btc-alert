@@ -20,20 +20,24 @@ type Publisher struct {
 	UseMarketHours bool   // whether the security abides by exchange market hours (NYSE, etc)
 	Candle         *Candlestick
 	PreviousCandle *Candlestick
+	Listeners      map[string]UpdateHandler
+	Stack          *CandleStack
+
+	// Rethink:
 	Streak         int // How many times in a row the candlestick moved in a certain direction
 	PositiveStreak bool
-	Updates        int // How many times the publisher has fetched a new price
-	Listeners      map[string]UpdateHandler
-	active         bool
-	refreshDur     time.Duration
-	candleDur      time.Duration
-	priceFetcher   func(string) float64
+
+	active       bool
+	refreshDur   time.Duration
+	candleDur    time.Duration
+	priceFetcher func(string) float64
 }
 
 type UpdateHandler func(*Publisher, *Candlestick, bool)
 
 // NewPublisher is a constructor
-func NewPublisher(priceFetcher func(string) float64, ticker, source string, start bool, candleDurSeconds int, refreshSeconds int) *Publisher {
+func NewPublisher(priceFetcher func(string) float64, ticker,
+	source string, start bool, candleDurSeconds int, refreshSeconds int) *Publisher {
 	if candleDurSeconds < 0 {
 		candleDurSeconds = 60
 	}
@@ -49,9 +53,16 @@ func NewPublisher(priceFetcher func(string) float64, ticker, source string, star
 		active:       start,
 		Listeners:    make(map[string]UpdateHandler),
 	}
+	p.Stack = NewStack(p)
 	log.Infof("Publisher %v: %v %v", p.Ticker, p.refreshDur, p.candleDur)
-	p.init()
+	if start {
+		p.Start()
+	}
 	return p
+}
+
+func (p *Publisher) GetRefreshDurInSeconds() int {
+	return int(p.refreshDur.Seconds())
 }
 
 func (p *Publisher) String() string {
@@ -61,8 +72,8 @@ func (p *Publisher) String() string {
 	} else {
 		candleString = p.Candle.String()
 	}
-	s := "%v [%v] (%v) - %d Updates - Active? [%v]"
-	return fmt.Sprintf(s, p.Ticker, p.Source, candleString, p.Updates, p.active)
+	s := "%v [%v] (%v) - Active? [%v]"
+	return fmt.Sprintf(s, p.Ticker, p.Source, candleString, p.active)
 }
 
 func (p *Publisher) Unsub(id string) bool {
@@ -80,20 +91,26 @@ func (p *Publisher) SetActive(state bool) {
 }
 
 // StartProducing loops and updates the price from the chosen exchange
-func (p *Publisher) init() {
+func (p *Publisher) Start() {
+	log.Infof("%v publisher: starting", p.Ticker)
+	p.active = true
 	go func() {
-		p.active = true
 		for {
 			// Disable self if past market hours
 			if p.UseMarketHours && !utils.IsMarketHours() && p.active {
 				log.Warnf("%s disabled as it is not market hours", p.Ticker)
 				p.active = false
 			}
+			done := false
 			if p.active {
-				p.fetchAndUpdatePrice()
+				done = p.fetchAndUpdatePrice()
 			}
-			// log.Infof("%v: Next update: %v", p.Ticker, time.Now().Local().Add(p.refreshDur))
-			log.Infof("%v: update %v => %v", p.Ticker, fdate(p.Candle.Start), fdate(time.Now().Local().Add(p.refreshDur)))
+			s := fmt.Sprintf("%v: update [%v] %v => %v",
+				p.Ticker, p.Price(), fdate(p.Candle.Start), fdate(time.Now().Local().Add(p.refreshDur)))
+			if done {
+				s += " [done]"
+			}
+			log.Infof(s)
 			time.Sleep(p.refreshDur)
 		}
 	}()
@@ -110,7 +127,6 @@ func (p *Publisher) RegisterPriceUpdateListener(s UpdateHandler) string {
 }
 
 func (p *Publisher) onPriceUpdated(completed bool) {
-	p.Updates++
 	for _, c := range p.Listeners {
 		go c(p, p.Candle, completed)
 	}

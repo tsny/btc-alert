@@ -14,14 +14,14 @@ type Service struct {
 
 type InfoBall struct {
 	Publisher *Publisher
-	Queue     *CandleQueue
+	Queue     *CandleStack
 }
 
 func NewSecurityLookup() *Service {
 	return &Service{make(map[*Security]*InfoBall), &sync.Mutex{}}
 }
 
-func (s *Service) Register(sec *Security, pub *Publisher, queue *CandleQueue) *InfoBall {
+func (s *Service) Register(sec *Security, pub *Publisher, queue *CandleStack) *InfoBall {
 	found := s.FindSecurityByNameOrTicker(sec.Name)
 	if found != nil {
 		return nil

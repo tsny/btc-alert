@@ -71,8 +71,8 @@ func (c Candlestick) OpenCloseDiff() float64 {
 
 func (c Candlestick) String() string {
 	emoji := utils.GetEmoji(c.Price, c.Previous)
-	diff := c.Price - c.Previous
-	percent := (diff / c.Price) * 100
+	priceDiff := c.Price - c.Previous
+	percent := (priceDiff / c.Price) * 100
 	if c.Previous == 0.00 && c.Price == 0.00 {
 		return fmt.Sprintf("%v $%.2f", emoji, c.Price)
 	}
@@ -81,7 +81,7 @@ func (c Candlestick) String() string {
 	if c.Price < 1 {
 		s = "%v $%.5f | High: $%.5f | Low: $%.5f | Chg: $%.5f | Percent: %.2f%% | Vol: %v%"
 	}
-	return fmt.Sprintf(s, emoji, c.Price, c.High, c.Low, diff, percent, c.Volatility())
+	return fmt.Sprintf(s, emoji, c.Price, c.High, c.Low, priceDiff, percent, c.Volatility())
 }
 
 func (c Candlestick) Table() string {
@@ -95,7 +95,12 @@ func (c Candlestick) Volatility() float64 {
 	return (math.Abs(c.High-c.Low) / c.Close) * 100
 }
 
-func (c Candlestick) Diff(c2 *Candlestick) string {
+func (c Candlestick) DiffPercent(c2 *Candlestick) float64 {
+	priceDiff := c.Price - c2.Price
+	return (priceDiff / c.Price) * 100
+}
+
+func (c Candlestick) Diff(c2 Candlestick) string {
 	s := fmt.Sprintf("%v => %v (%v) | %v => %v",
 		fdate(c.Start), fdate(c2.Start), c2.Start.Sub(c.Start), c.Open, c2.Open)
 	return s

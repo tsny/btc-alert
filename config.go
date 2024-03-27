@@ -2,17 +2,12 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 
 	"btc-alert/utils"
-
-	"github.com/sirupsen/logrus"
 )
 
 type config struct {
-	Intervals         []interval      `json:"intervals"`
-	Thresholds        []threshold     `json:"thresholds"`
 	PercentageChanges []PercentChange `json:"percentageChanges"`
 
 	VolatilityAlert      float64       `json:"volatilityAlert"`
@@ -44,11 +39,8 @@ func readConfig() {
 		panic(err)
 	}
 	utils.Banner("btc-alert initializing")
-	fmt.Printf("props: %d intervals | %d thresholds\n", len(conf.Intervals), len(conf.Thresholds))
-	logrus.Infof("%+v", conf.Intervals)
 
 	if conf.Discord.Enabled {
-		println("Discord enabled")
 		cryptoBot = initBot(conf.Discord.Token)
 	}
 }

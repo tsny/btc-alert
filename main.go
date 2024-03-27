@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"btc-alert/coinbase"
 	"btc-alert/eps"
@@ -15,7 +16,7 @@ import (
 
 var lookupService = eps.NewSecurityLookup()
 var publishers = []*eps.Publisher{}
-var queues = map[string]*eps.CandleQueue{}
+var test *VolatilityListener
 
 func main() {
 
@@ -27,9 +28,26 @@ func main() {
 	readConfig()
 
 	// Crypto
-	btcPublisher := eps.NewPublisher(coinbase.GetPrice, coinbase.BTC, "Coinbase", false, 60, 20)
-	publishers = append(publishers, btcPublisher)
-	go track(btcPublisher)
+	btc := eps.NewPublisher(coinbase.GetPrice, coinbase.BTC, "Coinbase", false, 60, 20)
+	publishers = append(publishers, btc)
+	for _, pc := range conf.PercentageChanges {
+		test = NewVolatilityListener(btc, float64(pc.PercentChange), pc.DurInMinutes)
+	}
+	go track(btc)
+
+	go func() {
+		userID := conf.Discord.UsersToNotify[0]
+		for {
+			candle := btc.Candle
+			dur := time.Hour * 6
+			log.Infof("Alerting %v in %v", userID, dur)
+			time.Sleep(dur)
+			_, err := cryptoBot.SendMessage(btc.Candle.Diff(*candle), userID)
+			if err != nil {
+				log.Errorf(err.Error())
+			}
+		}
+	}()
 
 	// API Init
 	port := os.Getenv("PORT")
@@ -43,22 +61,12 @@ func main() {
 }
 
 func track(pub *eps.Publisher) {
-	// _ = newListener(pub, conf.Intervals, conf.Thresholds)
-	queue := eps.NewQueue(pub)
-	queues[pub.Ticker] = queue
-	pub.SetActive(true)
+	pub.Start()
 }
 
-func findPublisher(s string) (*eps.Publisher, bool) {
+func findPublisher(ticker string) (*eps.Publisher, bool) {
+	ticker = strings.ToLower(ticker)
 	return lo.Find(publishers, func(e *eps.Publisher) bool {
-		return strings.Contains(strings.ToLower(e.Ticker), s)
+		return strings.Contains(strings.ToLower(e.Ticker), ticker)
 	})
-}
-
-func findQueue(ticker string) (*eps.CandleQueue, bool) {
-	key, ok := lo.Find(lo.Keys(queues), func(s string) bool { return strings.Contains(s, ticker) })
-	if !ok {
-		return nil, false
-	}
-	return queues[key], true
 }
