@@ -83,7 +83,25 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 
 	case "whois", "get":
 		cb.handleGet(ticker, m)
-		return
+
+	case "target":
+		if len(parts) <= 2 {
+			_, _ = cb.SendUserMessage(m.Author, "Invalid; usage: target btc 60000")
+			return
+		}
+		pub, ok := findPublisher(ticker)
+		if !ok {
+			_, _ = cb.SendUserMessage(m.Author, "ticker %v not found", ticker)
+			return
+		}
+		target, err := strconv.ParseFloat(parts[2], 64)
+		if err != nil {
+			_, _ = cb.SendUserMessage(m.Author, "coun't parse num %v: %v", parts[2], err)
+			return
+		}
+		NewChangeListener(pub).RegisterTargetTracker(m.Author.ID, target)
+		_, _ = cb.SendUserMessage(m.Author, "Will alert you when `%v` price (`%v`) moves past `%v`",
+			ticker, pub.Candle.Price, target)
 
 	case "track":
 		if len(parts) <= 2 {
@@ -106,16 +124,11 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 			cl.RegisterPercentListener(m.Author.ID, chgAmount)
 			suffix = "%"
 		} else {
-			cl.Register(m.Author.ID, chgAmount)
+			cl.RegisterPriceMovementListener(m.Author.ID, chgAmount)
 		}
 		_, _ = cb.SendUserMessage(m.Author, "Will alert you when `%v` price (`%v`) changes by `%v%v`",
 			ticker, pub.Candle.Price, chgAmount, suffix)
 
-	case "chart", "graph":
-		if ticker == "" {
-			_, _ = cb.SendUserMessage(m.Author, "ticker %v not found", ticker)
-			return
-		}
 	default:
 		_, _ = cb.SendUserMessage(m.Author, "What?")
 	}
