@@ -1,6 +1,4 @@
-## Note
-
-Not actively maintained and somewhat of a beginner project! 
+`btc-alert` is a Discord bot (or desktop app) that can alert you when price movements occur for crypto. (mostly BTC)
 
 ## Usage
 
@@ -28,11 +26,6 @@ Config file will look like this:
         "token": "token.WgvCew.ObvImI8RA0HAn-kf2u8omFQGINI",
         "channelId": "715135158184218",
     },
-    "yahooTickers":[
-        "MSFT",
-        "GM",
-        "GME"
-    ],
     "thresholds": [
         {
             "threshold": 500
@@ -63,9 +56,6 @@ Checkout `routes.go` for a few of the endpoints, port defaults to 8080
 Returns the publishers associated with all tracked crypto coins
 ![Example API](https://i.imgur.com/eMDdj3S.png)
 
-#### Graphs!
-I'm working on rudimentary caching that allows me to do stuff like plot over a graph
-You can hit `GET /symbol/{symbol/graph` to get a bare bones chart of the recent price of the stock
 
 ![Example BTC Graph](https://i.imgur.com/qME6WLJ.png)
 
@@ -74,50 +64,3 @@ You can hit `GET /symbol/{symbol/graph` to get a bare bones chart of the recent 
 If you have a Discord bot, you can redirect to there!
 
 ![Example Screenshot](https://i.imgur.com/zbDfI9B.png)
-
-#### Discord Commands
-
-{ticker}'s can be either be something like BTC or BTC-USD or btc
-
-`!get {ticker}`
-
-Returns the last minute candlestick for the provided ticker
-
-`!trade {ticker}`
-
-Returns the current price with a 1% and 2% difference for helping calculate trade costs
-
-`!sub {ticker} {price}`
-
-Subscribes to the event of a certin price point
-
-`!stat {ticker}`
-
-Returns the last 24 hour candlestick
-
-`!gainers`
-`!losers`
-
-Returns the top market movers (gainers/losers) from Yahoo Finance
-
-![Movers](https://i.imgur.com/MM9NXqE.png)
-
-`!whois {ticker}`
-
-Returns the company summary from MarketWatch 
-
-![Summary](https://i.imgur.com/YY8wHq2.png)
-
-## Logs Example
-
-![Example Screenshot](https://i.imgur.com/lKS8kzG.png)
-
-## Dependencies
-
-- github.com/gen2brain/beeep     -  Notifications
-- github.com/bwmarrin/discordgo  -  Discord API
-- github.com/PuerkitoBio/goquery - Tables
-
-- Yahoo Finance                  -  Ticker prices
-- CoindeskAPI                    -  Coin Price Data
-- CoinbaseAPI                    -  Coins
