@@ -16,7 +16,6 @@ import (
 
 var lookupService = eps.NewSecurityLookup()
 var publishers = []*eps.Publisher{}
-var test *VolatilityListener
 
 func main() {
 
@@ -30,10 +29,11 @@ func main() {
 	// Crypto
 	btc := eps.NewPublisher(coinbase.GetPrice, coinbase.BTC, "Coinbase", false, 60, 20)
 	publishers = append(publishers, btc)
+	volListeners := []*VolatilityListener{}
 	for _, pc := range conf.PercentageChanges {
-		test = NewVolatilityListener(btc, float64(pc.PercentChange), pc.DurInMinutes)
+		volListeners = append(volListeners, NewVolatilityListener(btc, float64(pc.PercentChange), pc.DurInMinutes))
 	}
-	go track(btc)
+	btc.Start()
 
 	go func() {
 		userID := conf.Discord.UsersToNotify[0]
@@ -42,7 +42,9 @@ func main() {
 			log.Infof("Alerting %v in %v", userID, dur)
 			time.Sleep(dur)
 			candle := btc.Candle
-			_, err := cryptoBot.SendMessage(btc.Candle.Diff(*candle), userID)
+			msg := btc.Candle.Diff(*candle)
+			msg = fmt.Sprintf("%v dur change: %v", dur, msg)
+			_, err := cryptoBot.SendMessage(msg, userID)
 			if err != nil {
 				log.Errorf(err.Error())
 			}
@@ -58,10 +60,6 @@ func main() {
 
 	log.Infof("Listening on port %s", port)
 	log.Fatal(http.ListenAndServe(":"+port, initRoutes()))
-}
-
-func track(pub *eps.Publisher) {
-	pub.Start()
 }
 
 func findPublisher(ticker string) (*eps.Publisher, bool) {
