@@ -38,10 +38,10 @@ func main() {
 	go func() {
 		userID := conf.Discord.UsersToNotify[0]
 		for {
-			candle := btc.Candle
 			dur := time.Hour * 6
 			log.Infof("Alerting %v in %v", userID, dur)
 			time.Sleep(dur)
+			candle := btc.Candle
 			_, err := cryptoBot.SendMessage(btc.Candle.Diff(*candle), userID)
 			if err != nil {
 				log.Errorf(err.Error())
