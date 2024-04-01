@@ -38,6 +38,7 @@ func readConfig() {
 	if err = json.Unmarshal(bytes, &conf); err != nil {
 		panic(err)
 	}
+
 	utils.Banner("btc-alert initializing")
 
 	if conf.Discord.Enabled {

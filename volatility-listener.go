@@ -2,9 +2,7 @@ package main
 
 import (
 	"btc-alert/eps"
-	"btc-alert/utils"
-
-	"github.com/sirupsen/logrus"
+	"fmt"
 )
 
 type VolatilityListener struct {
@@ -32,10 +30,17 @@ func (v *VolatilityListener) HandlePriceUpdate(p *eps.Publisher, c *eps.Candlest
 	if !complete {
 		return
 	}
-	if len(p.Stack.Array) < v.numCandles {
+	candles := p.Stack.Array
+	if len(candles) < v.numCandles {
 		return
 	}
-	arr := p.Stack.Array
-	last := arr[v.numCandles-1]
-	logrus.Infof("%v | %v => %v (%.2f)", utils.CompareTimes(c.Start, last.Start), last.Price, arr[0].Price, c.DiffPercent(last))
+	startCandle := candles[v.numCandles-1]
+	for i := v.numCandles - 2; i >= 0; i-- {
+		currCandle := candles[i]
+		diffPercent := currCandle.DiffPercent(startCandle)
+		if diffPercent > v.percentChange {
+			// TODO: DO THE NOTIF
+		}
+		fmt.Println(currCandle.DiffString(*startCandle))
+	}
 }

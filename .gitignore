@@ -20,3 +20,4 @@ config.json
 coinbase.secret
 .gcloudignore
 app.yaml
+creds.sh

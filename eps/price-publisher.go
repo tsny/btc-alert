@@ -92,6 +92,10 @@ func (p *Publisher) SetActive(state bool) {
 
 // StartProducing loops and updates the price from the chosen exchange
 func (p *Publisher) Start() {
+	// Already started
+	if p.active || p.Candle != nil {
+		return
+	}
 	log.Infof("%v publisher: starting", p.Ticker)
 	p.active = true
 	go func() {

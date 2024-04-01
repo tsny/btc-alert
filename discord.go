@@ -1,14 +1,13 @@
 package main
 
 import (
+	"btc-alert/stocks"
 	"fmt"
 	"io"
 	"strconv"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
-
-	"btc-alert/eps"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -22,15 +21,6 @@ import (
 type CryptoBot struct {
 	session         *discordgo.Session
 	serverChannelID string
-}
-
-type priceAlert struct {
-	requester     string
-	publisher     *eps.Publisher
-	targetPrice   float64
-	startingPrice float64
-	active        bool
-	startedBelow  bool
 }
 
 var cryptoBot *CryptoBot
@@ -164,6 +154,8 @@ func (cb *CryptoBot) SendGraph(content string, reader io.Reader) {
 func (cb *CryptoBot) handleGet(ticker string, m *discordgo.MessageCreate) {
 	pub, ok := findPublisher(ticker)
 	if !ok {
+		price := stocks.GetPrice(ticker)
+		_, _ = cb.session.ChannelMessageSend(m.ChannelID, fmt.Sprintf("%v", price))
 		return
 	}
 	log.Infof("%v", pub.String())

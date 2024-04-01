@@ -48,19 +48,3 @@ Config file will look like this:
 }
 ```
 
-### API
-
-Checkout `routes.go` for a few of the endpoints, port defaults to 8080
-
-`GET /crypto`
-Returns the publishers associated with all tracked crypto coins
-![Example API](https://i.imgur.com/eMDdj3S.png)
-
-
-![Example BTC Graph](https://i.imgur.com/qME6WLJ.png)
-
-### Discord
-
-If you have a Discord bot, you can redirect to there!
-
-![Example Screenshot](https://i.imgur.com/zbDfI9B.png)

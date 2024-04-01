@@ -96,12 +96,16 @@ func (c Candlestick) Volatility() float64 {
 }
 
 func (c Candlestick) DiffPercent(c2 *Candlestick) float64 {
-	priceDiff := c.Price - c2.Price
+	priceDiff := c.Diff(*c2)
 	return (priceDiff / c.Price) * 100
 }
 
-func (c Candlestick) Diff(c2 Candlestick) string {
-	s := fmt.Sprintf("%v => %v (%v) | %v => %v",
-		fdate(c.Start), fdate(c2.Start), c2.Start.Sub(c.Start), c.Open, c2.Open)
+func (c Candlestick) DiffString(c2 Candlestick) string {
+	s := fmt.Sprintf("%v => %v (%.0fm) | %v => %v (%2f)",
+		fdate(c.Start), fdate(c2.Start), c2.Start.Sub(c.Start).Minutes(), c.Open, c2.Open, c.DiffPercent(&c2))
 	return s
+}
+
+func (c Candlestick) Diff(c2 Candlestick) float64 {
+	return math.Abs(c.Price - c2.Price)
 }

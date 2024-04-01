@@ -26,23 +26,25 @@ func main() {
 	}
 	readConfig()
 
-	// Crypto
 	btc := eps.NewPublisher(coinbase.GetPrice, coinbase.BTC, "Coinbase", false, 60, 20)
 	publishers = append(publishers, btc)
 	volListeners := []*VolatilityListener{}
 	for _, pc := range conf.PercentageChanges {
-		volListeners = append(volListeners, NewVolatilityListener(btc, float64(pc.PercentChange), pc.DurInMinutes))
+		listener := NewVolatilityListener(btc, float64(pc.PercentChange), pc.DurInMinutes)
+		volListeners = append(volListeners, listener)
+		println(listener.percentChange)
 	}
 	btc.Start()
 
 	go func() {
+		time.Sleep(1 * time.Second)
 		userID := conf.Discord.UsersToNotify[0]
 		for {
+			firstCandle := *btc.Candle
 			dur := time.Hour * 6
 			log.Infof("Alerting %v in %v", userID, dur)
 			time.Sleep(dur)
-			candle := btc.Candle
-			msg := btc.Candle.Diff(*candle)
+			msg := btc.Candle.DiffString(firstCandle)
 			msg = fmt.Sprintf("%v dur change: %v", dur, msg)
 			_, err := cryptoBot.SendMessage(msg, userID)
 			if err != nil {
