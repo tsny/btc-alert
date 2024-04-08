@@ -23,8 +23,10 @@ Config file will look like this:
     "bootNotification": false,
     "discord": {
         "enabled": false,
-        "token": "token.WgvCew.ObvImI8RA0HAn-kf2u8omFQGINI",
-        "channelId": "715135158184218",
+        "token": "token.WgvCew.ObvImI8faketoken-kf2u8omFQGINI",
+        "usersToNotify": [
+            "84090395092353024"
+        ]
     },
     "thresholds": [
         {
