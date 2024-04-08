@@ -1,12 +1,14 @@
 package coinbase
 
 import (
-	"btc-alert/pkg/eps"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
+
+	"github.com/samber/lo"
 )
 
 type Ticker struct {
@@ -29,13 +31,23 @@ type OneDayCandle struct {
 }
 
 const (
-	BTC = "BTC-USD"
-	ETH = "ETH-USD"
+	BTC  = "BTC-USD"
+	ETH  = "ETH-USD"
+	DOGE = "DOGE-USD"
+	SOL  = "SOL-USD"
 )
 
-// CryptoMap is a map of the Coin's simple name to its ticker
-var CryptoMap = map[string]*eps.Security{
-	BTC: {Name: "BTC", Type: eps.Crypto},
+func Tickers() []string {
+	return []string{
+		BTC, ETH, DOGE, SOL,
+	}
+}
+
+func FindTicker(ticker string) (string, bool) {
+	ticker = strings.ToLower(ticker)
+	return lo.Find(Tickers(), func(e string) bool {
+		return strings.Contains(strings.ToLower(e), ticker)
+	})
 }
 
 // TickerURL is the Coinbase Ticker API URL
@@ -46,28 +58,26 @@ const TickerURL = "https://api.pro.coinbase.com/products/%s/ticker"
 const DailyURL = "https://api.pro.coinbase.com/products/%s/stats"
 
 // GetDetails retrieves details regarding a specific coin
-func GetDetails(ticker string) *Ticker {
+func GetDetails(ticker string) (*Ticker, error) {
 	res, err := http.Get(fmt.Sprintf(TickerURL, ticker))
 	if err != nil {
-		println(err)
-		return nil
+		return nil, err
 	}
 	var out Ticker
-	d := json.NewDecoder(res.Body)
-	d.Decode(&out)
-	if err != nil {
-		return nil
+	if err = json.NewDecoder(res.Body).Decode(&out); err != nil {
+		return nil, err
 	}
-	return &out
+	return &out, nil
 }
 
 // GetPrice retrieves Coinbase's price for a specific coin
 func GetPrice(ticker string) float64 {
-	out := GetDetails(ticker)
-	if out == nil {
+	out, err := GetDetails(ticker)
+	if err != nil {
+		println(err.Error())
 		return -1
 	}
-	p, _ := strconv.ParseFloat(out.Price, 2)
+	p, _ := strconv.ParseFloat(out.Price, 64)
 	return p
 }
 

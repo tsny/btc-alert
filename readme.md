@@ -48,3 +48,6 @@ Config file will look like this:
 }
 ```
 
+Example of using the bot via discord
+
+![exmaple-discordbot](https://i.postimg.cc/x8VP962Y/image.png)
