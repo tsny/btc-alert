@@ -38,6 +38,7 @@ func readConfig() config {
 	if err = json.Unmarshal(bytes, &conf); err != nil {
 		panic(err)
 	}
+	discordBot = alert.NewBot(conf.Discord.Token)
 
 	utils.Banner("btc-alert initializing")
 	return conf

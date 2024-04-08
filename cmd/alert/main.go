@@ -12,7 +12,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var cryptoBot *alert.CryptoBot
+var discordBot *alert.CryptoBot
 
 func main() {
 
@@ -43,7 +43,7 @@ func main() {
 			msg := firstCandle.DiffString(*btc.Candle)
 			emoji := firstCandle.DiffEmoji(*btc.Candle)
 			msg = fmt.Sprintf("%v: %v dur change: %v", emoji, dur, msg)
-			_, err := cryptoBot.SendMessage(msg, userID)
+			_, err := discordBot.SendMessage(msg, userID)
 			if err != nil {
 				log.Errorf(err.Error())
 			}

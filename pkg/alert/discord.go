@@ -23,7 +23,7 @@ type CryptoBot struct {
 
 // todo: pass in the channel id, don't ref config all the time?
 // todo: return err
-func initBot(token string) *CryptoBot {
+func NewBot(token string) *CryptoBot {
 	session, err := discordgo.New("Bot " + token)
 	if err != nil {
 		log.Infof("error creating Discord session: %v", err)
