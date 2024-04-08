@@ -11,7 +11,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var publishers = []*eps.Publisher{}
+var Publishers = []*eps.Publisher{}
 
 type ChangeListener struct {
 	pub       *eps.Publisher

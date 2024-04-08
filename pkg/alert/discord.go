@@ -79,7 +79,7 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 			_, _ = cb.SendUserMessage(m.Author, "Invalid; usage: target btc 60000")
 			return
 		}
-		pub, ok := FindPublisher(publishers, ticker)
+		pub, ok := FindPublisher(Publishers, ticker)
 		if !ok {
 			_, _ = cb.SendUserMessage(m.Author, "ticker %v not found", ticker)
 			return
@@ -98,7 +98,7 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 			_, _ = cb.SendUserMessage(m.Author, "Invalid; usage: track btc 500")
 			return
 		}
-		pub, ok := FindPublisher(publishers, ticker)
+		pub, ok := FindPublisher(Publishers, ticker)
 		if !ok {
 			_, _ = cb.SendUserMessage(m.Author, "ticker %v not found", ticker)
 			return
@@ -141,7 +141,7 @@ func (cb *CryptoBot) SendUserMessage(user *discordgo.User, str string, args ...i
 }
 
 func (cb *CryptoBot) handleGet(ticker string, m *discordgo.MessageCreate) {
-	pub, ok := FindPublisher(publishers, ticker)
+	pub, ok := FindPublisher(Publishers, ticker)
 	if !ok {
 		_, _ = cb.session.ChannelMessageSend(m.ChannelID, "Who?")
 		return

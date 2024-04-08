@@ -12,7 +12,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var publishers = []*eps.Publisher{}
 var cryptoBot *alert.CryptoBot
 
 func main() {
@@ -25,7 +24,7 @@ func main() {
 	conf := readConfig()
 
 	btc := eps.NewPublisher(coinbase.GetPrice, coinbase.BTC, "Coinbase", false, 60, 20)
-	publishers = append(publishers, btc)
+	alert.Publishers = append(alert.Publishers, btc)
 	volListeners := []*alert.VolatilityListener{}
 	for _, pc := range conf.PercentageChanges {
 		listener := alert.NewVolatilityListener(btc, float64(pc.PercentChange), pc.DurInMinutes)
