@@ -1,7 +1,7 @@
-package main
+package alert
 
 import (
-	"btc-alert/eps"
+	"btc-alert/pkg/eps"
 	"fmt"
 )
 

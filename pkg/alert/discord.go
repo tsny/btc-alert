@@ -1,11 +1,10 @@
-package main
+package alert
 
 import (
-	"btc-alert/stocks"
 	"fmt"
-	"io"
 	"strconv"
 	"strings"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 
@@ -19,11 +18,8 @@ import (
 // CryptoBot is a service that communicates with discord and holds onto alerts
 // that are created for discord users
 type CryptoBot struct {
-	session         *discordgo.Session
-	serverChannelID string
+	session *discordgo.Session
 }
-
-var cryptoBot *CryptoBot
 
 // todo: pass in the channel id, don't ref config all the time?
 // todo: return err
@@ -41,7 +37,7 @@ func initBot(token string) *CryptoBot {
 	}
 
 	log.Infof("Connected to Discord server")
-	cb := &CryptoBot{session: session, serverChannelID: conf.Discord.ChannelID}
+	cb := &CryptoBot{session: session}
 	session.AddHandler(cb.OnNewMessage)
 	return cb
 }
@@ -71,6 +67,10 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 
 	switch parts[0] {
 
+	case "boot":
+		str := fmt.Sprintf("boot time: %v (%v ago)", bootTime.Local().Format(time.DateTime), time.Since(bootTime))
+		_, _ = cb.SendUserMessage(m.Author, str)
+
 	case "whois", "get":
 		cb.handleGet(ticker, m)
 
@@ -79,7 +79,7 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 			_, _ = cb.SendUserMessage(m.Author, "Invalid; usage: target btc 60000")
 			return
 		}
-		pub, ok := findPublisher(ticker)
+		pub, ok := FindPublisher(publishers, ticker)
 		if !ok {
 			_, _ = cb.SendUserMessage(m.Author, "ticker %v not found", ticker)
 			return
@@ -98,7 +98,7 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 			_, _ = cb.SendUserMessage(m.Author, "Invalid; usage: track btc 500")
 			return
 		}
-		pub, ok := findPublisher(ticker)
+		pub, ok := FindPublisher(publishers, ticker)
 		if !ok {
 			_, _ = cb.SendUserMessage(m.Author, "ticker %v not found", ticker)
 			return
@@ -124,11 +124,6 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 	}
 }
 
-// Sends a generalized message, used for alerts, 'ats' everyone if enabled
-func (cb *CryptoBot) SendGeneralMessage(str string) (*discordgo.Message, error) {
-	return cb.SendMessage(str, "")
-}
-
 // SendMessage sends a discord message with an optional mention
 // TODO: Could change these into options for UserID and TTS
 func (cb *CryptoBot) SendMessage(str string, userID string) (*discordgo.Message, error) {
@@ -145,17 +140,10 @@ func (cb *CryptoBot) SendUserMessage(user *discordgo.User, str string, args ...i
 	return cb.SendMessage(fmt.Sprintf(str, args...), user.ID)
 }
 
-func (cb *CryptoBot) SendGraph(content string, reader io.Reader) {
-	file := &discordgo.File{Name: "test.png", Reader: reader}
-	msg := &discordgo.MessageSend{Content: content, Files: []*discordgo.File{file}}
-	cb.session.ChannelMessageSendComplex(cb.serverChannelID, msg)
-}
-
 func (cb *CryptoBot) handleGet(ticker string, m *discordgo.MessageCreate) {
-	pub, ok := findPublisher(ticker)
+	pub, ok := FindPublisher(publishers, ticker)
 	if !ok {
-		price := stocks.GetPrice(ticker)
-		_, _ = cb.session.ChannelMessageSend(m.ChannelID, fmt.Sprintf("%v", price))
+		_, _ = cb.session.ChannelMessageSend(m.ChannelID, "Who?")
 		return
 	}
 	log.Infof("%v", pub.String())

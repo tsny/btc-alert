@@ -2,7 +2,7 @@
 package eps
 
 import (
-	"btc-alert/utils"
+	"btc-alert/pkg/utils"
 	"fmt"
 	"strings"
 	"time"

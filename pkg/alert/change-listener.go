@@ -1,15 +1,21 @@
-package main
+package alert
 
 import (
-	"btc-alert/eps"
+	"btc-alert/pkg/eps"
+	"btc-alert/pkg/utils"
 	"fmt"
 	"math"
+	"strings"
 
+	"github.com/samber/lo"
 	"github.com/sirupsen/logrus"
 )
 
+var publishers = []*eps.Publisher{}
+
 type ChangeListener struct {
-	pub *eps.Publisher
+	pub       *eps.Publisher
+	cryptoBot *CryptoBot
 }
 
 func NewChangeListener(p *eps.Publisher) *ChangeListener {
@@ -23,7 +29,7 @@ func (l *ChangeListener) RegisterPriceMovementListener(userID string, changeAmou
 	handler := func(p *eps.Publisher, c *eps.Candlestick, b bool) {
 		if diff := math.Abs(c.Price - startPrice); diff > changeAmount {
 			msg := fmt.Sprintf("`%v` moved from `%v` to `%v` | A change of `%v`", p.Ticker, startPrice, c.Price, diff)
-			_, _ = cryptoBot.SendMessage(msg, userID)
+			_, _ = l.cryptoBot.SendMessage(msg, userID)
 			p.Unsub(id)
 		}
 	}
@@ -40,13 +46,13 @@ func (l *ChangeListener) RegisterTargetTracker(userID string, target float64) {
 	logrus.Infof("Alerting %v when %v moves past %v", userID, l.pub.Ticker, target)
 	handler := func(p *eps.Publisher, c *eps.Candlestick, b bool) {
 		if startedBelow && c.Price > target {
-			msg := fmt.Sprintf("`%v` rose above `%v` to `%v`", p.Ticker, startPrice, c.Price)
-			_, _ = cryptoBot.SendMessage(msg, userID)
+			msg := fmt.Sprintf("%v `%v` rose above `%v` to `%v`", utils.Green, p.Ticker, startPrice, c.Price)
+			_, _ = l.cryptoBot.SendMessage(msg, userID)
 			p.Unsub(id)
 		}
 		if !startedBelow && c.Price < target {
-			msg := fmt.Sprintf("`%v` fell below `%v` to `%v`", p.Ticker, startPrice, c.Price)
-			_, _ = cryptoBot.SendMessage(msg, userID)
+			msg := fmt.Sprintf("%v `%v` fell below `%v` to `%v`", utils.Red, p.Ticker, startPrice, c.Price)
+			_, _ = l.cryptoBot.SendMessage(msg, userID)
 			p.Unsub(id)
 		}
 	}
@@ -56,4 +62,11 @@ func (l *ChangeListener) RegisterTargetTracker(userID string, target float64) {
 func (l *ChangeListener) RegisterPercentListener(userID string, percent float64) {
 	changeAmount := percent * l.pub.Price()
 	l.RegisterPriceMovementListener(userID, changeAmount)
+}
+
+func FindPublisher(publishers []*eps.Publisher, ticker string) (*eps.Publisher, bool) {
+	ticker = strings.ToLower(ticker)
+	return lo.Find(publishers, func(e *eps.Publisher) bool {
+		return strings.Contains(strings.ToLower(e.Ticker), ticker)
+	})
 }

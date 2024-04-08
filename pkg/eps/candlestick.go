@@ -1,7 +1,7 @@
 package eps
 
 import (
-	"btc-alert/utils"
+	"btc-alert/pkg/utils"
 	"fmt"
 	"math"
 	"time"
@@ -104,6 +104,13 @@ func (c Candlestick) DiffString(c2 Candlestick) string {
 	s := fmt.Sprintf("%v => %v (%.0fm) | %v => %v (%2f)",
 		fdate(c.Start), fdate(c2.Start), c2.Start.Sub(c.Start).Minutes(), c.Open, c2.Open, c.DiffPercent(&c2))
 	return s
+}
+
+func (c Candlestick) DiffEmoji(c2 Candlestick) string {
+	if c.Price-c2.Price < 0 {
+		return "🟥"
+	}
+	return "🟩"
 }
 
 func (c Candlestick) Diff(c2 Candlestick) float64 {

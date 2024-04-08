@@ -4,11 +4,12 @@ import (
 	"encoding/json"
 	"os"
 
-	"btc-alert/utils"
+	"btc-alert/pkg/alert"
+	"btc-alert/pkg/utils"
 )
 
 type config struct {
-	PercentageChanges []PercentChange `json:"percentageChanges"`
+	PercentageChanges []alert.PercentChange `json:"percentageChanges"`
 
 	VolatilityAlert      float64       `json:"volatilityAlert"`
 	BootNotification     bool          `json:"bootNotification"`
@@ -26,22 +27,18 @@ type discordConfig struct {
 	UsersToNotify                []string `json:"usersToNotify"`
 }
 
-var conf config
-
-func readConfig() {
+func readConfig() config {
 	cfgPath := utils.Getenv("BTC_ALERT_CONFIG_PATH", "config.json")
 	println(cfgPath)
 	bytes, err := os.ReadFile(cfgPath)
 	if err != nil {
 		panic(err)
 	}
+	var conf config
 	if err = json.Unmarshal(bytes, &conf); err != nil {
 		panic(err)
 	}
 
 	utils.Banner("btc-alert initializing")
-
-	if conf.Discord.Enabled {
-		cryptoBot = initBot(conf.Discord.Token)
-	}
+	return conf
 }

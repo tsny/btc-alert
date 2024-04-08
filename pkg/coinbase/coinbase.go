@@ -1,7 +1,7 @@
 package coinbase
 
 import (
-	"btc-alert/eps"
+	"btc-alert/pkg/eps"
 	"encoding/json"
 	"fmt"
 	"net/http"

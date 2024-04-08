@@ -11,6 +11,8 @@ import (
 const (
 	Up              = "↑"
 	Down            = "↓"
+	Green           = "🟩"
+	Red             = "🟥"
 	Neutral         = " "
 	dollar          = "💲"
 	TimestampFormat = "03:04 PM"
