@@ -11,10 +11,6 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-// TODO: We should have crypto bot subscribe to events rather than the
-// events in files like listener.go directly call crypto bot, that way
-// if discord is inactive we don't have errors
-
 // CryptoBot is a service that communicates with discord and holds onto alerts
 // that are created for discord users
 type CryptoBot struct {

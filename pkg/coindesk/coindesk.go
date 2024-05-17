@@ -63,8 +63,7 @@ func GetPrice(ticker string) float64 {
 		return -1
 	}
 	var out Result
-	d := json.NewDecoder(res.Body)
-	d.Decode(&out)
+	err = json.NewDecoder(res.Body).Decode(&out)
 	if err != nil {
 		panic(err)
 	}
