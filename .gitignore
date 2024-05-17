@@ -21,3 +21,4 @@ coinbase.secret
 .gcloudignore
 app.yaml
 creds.sh
+dist

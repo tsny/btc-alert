@@ -85,7 +85,7 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 			_, _ = cb.SendUserMessage(m.Author, "coun't parse num %v: %v", parts[2], err)
 			return
 		}
-		NewChangeListener(pub).RegisterTargetTracker(m.Author.ID, target)
+		NewChangeListener(pub, cb).RegisterTargetTracker(m.Author.ID, target)
 		_, _ = cb.SendUserMessage(m.Author, "Will alert you when `%v` price (`%v`) moves past `%v`",
 			ticker, pub.Candle.Price, target)
 
@@ -100,7 +100,7 @@ func (cb *CryptoBot) OnNewMessage(s *discordgo.Session, m *discordgo.MessageCrea
 			return
 		}
 		// todo; need to track all listeners in case we have dupes
-		cl := NewChangeListener(pub)
+		cl := NewChangeListener(pub, cb)
 		chgAmount, err := strconv.ParseFloat(parts[2], 64)
 		if err != nil {
 			chgAmount = 500

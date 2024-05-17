@@ -18,8 +18,8 @@ type ChangeListener struct {
 	cryptoBot *CryptoBot
 }
 
-func NewChangeListener(p *eps.Publisher) *ChangeListener {
-	return &ChangeListener{pub: p}
+func NewChangeListener(p *eps.Publisher, cb *CryptoBot) *ChangeListener {
+	return &ChangeListener{pub: p, cryptoBot: cb}
 }
 
 func (l *ChangeListener) RegisterPriceMovementListener(userID string, changeAmount float64) {
